@@ -1,0 +1,17 @@
+{
+  "name": "safermotorcycling-verify-proxy",
+  "version": "0.1.0",
+  "description": "Backend proxy that holds government/aggregator API keys and exposes /verify endpoints for the SaferMotorcycling front-end. Keys never touch the browser.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,64 @@
+:root{
+  --bg:#ffffff;--surface:#f6f5f1;--surface2:#eeede7;--text:#201f1c;--muted:#6c6b64;--faint:#9b998f;--border:#e4e2da;
+  --info:#185fa5;--info-bg:#e6f1fb;--success:#1d7a52;--success-bg:#e3f5ec;--danger:#b3261e;--danger-bg:#fbe9e7;--amber:#9a6b00;--amber-bg:#f9efd6;
+  --radius:10px;--radius-lg:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+.app{max-width:920px;margin:0 auto;padding:22px 20px 48px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.muted{color:var(--muted)}.faint{color:var(--faint)}.small{font-size:12px}
+.i{width:1em;height:1em;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+.i.ok{color:var(--success)}.i.bad{color:var(--danger)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center}
+.logo svg{width:21px;height:21px}
+.brand h1{font-size:16px;margin:0;line-height:1.15}
+.brand p{font-size:12px;color:var(--muted);margin:0}
+.tag{font-size:12px;background:var(--surface2);color:var(--muted);padding:5px 10px;border-radius:8px}
+
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin:14px 0}
+.bar .stat b{font-weight:600}
+.bar .spacer{flex:1}
+label.k{font-size:12px;color:var(--muted);margin-right:6px}
+select,input[type=text]{height:36px;border:1px solid var(--border);border-radius:var(--radius);padding:0 11px;font:inherit;background:var(--bg);color:var(--text)}
+select:focus,input:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px var(--info-bg)}
+.btn{height:36px;border:1px solid var(--border);background:var(--bg);border-radius:var(--radius);font:inherit;font-size:13px;cursor:pointer;padding:0 13px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface)}
+.btn.primary{background:var(--info);color:#fff;border-color:var(--info)}.btn.primary:hover{background:#13507f}
+.btn.file{position:relative;overflow:hidden}
+.btn.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin:14px 0}
+.panel h2{font-size:15px;margin:0 0 4px}
+.panel h2 + p{margin:0 0 12px}
+.vrow{display:flex;gap:10px;flex-wrap:wrap}
+.vrow input[type=text]{flex:1;min-width:200px;height:40px}
+.note{font-size:12px;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius);padding:8px 11px;margin-top:10px}
+
+#verifyResult{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.rhead{display:flex;align-items:center;gap:12px}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+.avatar.none{background:var(--surface2);color:var(--faint)}
+.rhead .name{font-weight:600}
+.rhead > div:nth-child(2){flex:1}
+.reg-badge{font-size:12px;padding:4px 10px;border-radius:8px}
+.reg-badge.ok{background:var(--success-bg);color:var(--success)}
+.reg-badge.bad{background:var(--danger-bg);color:var(--danger)}
+.checks-label{font-size:12px;color:var(--muted);margin:14px 0 6px}
+.crow{display:grid;grid-template-columns:18px 190px 1fr;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.crow .src{color:var(--muted)}
+.crow .det.muted{color:var(--faint)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:8px;border-bottom:1px solid var(--border)}
+td{padding:9px 8px;border-bottom:1px solid var(--border)}
+.badge{font-size:12px;padding:3px 9px;border-radius:8px}
+.badge.ok{background:var(--success-bg);color:var(--success)}
+.badge.bad{background:var(--danger-bg);color:var(--danger)}
+.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.search{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.search input{flex:1}
+.foot{color:var(--faint);font-size:12px;margin-top:22px;line-height:1.6}

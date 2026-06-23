@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaferMotorcycling — NRSA</title>
+<style>
+:root{
+  --bg:#ffffff;--surface:#f6f5f1;--surface2:#eeede7;--text:#201f1c;--muted:#6c6b64;--faint:#9b998f;--border:#e4e2da;
+  --info:#185fa5;--info-bg:#e6f1fb;--success:#1d7a52;--success-bg:#e3f5ec;--danger:#b3261e;--danger-bg:#fbe9e7;--amber:#9a6b00;--amber-bg:#f9efd6;
+  --radius:10px;--radius-lg:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{max-width:1080px;margin:0 auto;padding:22px 20px 40px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.muted{color:var(--muted)}.faint{color:var(--faint)}.small{font-size:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center}
+.brand h1{font-size:16px;font-weight:600;margin:0;line-height:1.15}
+.brand p{font-size:12px;color:var(--muted);margin:0}
+.seg{display:inline-flex;background:var(--surface2);border-radius:11px;padding:3px}
+.seg button{border:none;background:none;padding:8px 16px;border-radius:9px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.i{width:1em;height:1em;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+.i.ok{color:var(--success)}.i.bad{color:var(--danger)}
+.view{display:none}.view.on{display:block}
+.stage{background:var(--surface2);border-radius:var(--radius-lg);padding:26px;display:flex;justify-content:center}
+.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:660px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.phbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.phbar .lg{display:flex;align-items:center;gap:9px}.phbar .lg svg{color:var(--info);width:22px;height:22px}
+.phbody{padding:17px;flex:1}
+.phnav{display:flex;border-top:1px solid var(--border)}
+.phnav button{flex:1;background:none;border:none;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);font-size:11px;cursor:pointer}
+.phnav button svg{width:19px;height:19px}.phnav button.on{color:var(--info)}
+.scr{display:none}.scr.on{display:block}.stp{display:none}.stp.on{display:block}
+.h{font-size:16px;font-weight:600;margin:2px 0 12px}
+.rolecard{width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px}
+.rolecard:hover{background:var(--surface)}
+.ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}.ic svg{width:18px;height:18px}
+label.lbl{display:block;font-size:13px;color:var(--muted);margin:13px 0 5px}
+input,select{height:38px;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;font:inherit;width:100%;background:var(--bg);color:var(--text)}
+input:focus,select:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px var(--info-bg)}
+.btn{height:42px;border:1px solid var(--border);background:var(--bg);border-radius:var(--radius);font:inherit;font-size:14px;cursor:pointer;width:100%;margin-top:11px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{background:var(--surface)}
+.btn.primary{background:var(--info);color:#fff;border-color:var(--info)}.btn.primary:hover{background:#13507f}
+.btn.ghost{height:auto;width:auto;border:none;background:none;color:var(--muted);padding:0;margin:0 0 10px;font-size:13px;display:inline-flex;gap:5px;align-items:center}
+.btn.ghost:hover{background:none;color:var(--text)}
+.btn.sm{height:34px;width:auto;margin:0;font-size:13px;padding:0 12px}
+.dots{display:flex;gap:6px;margin:2px 0 16px}.dot{flex:1;height:4px;border-radius:2px;background:var(--border)}.dot.on{background:var(--info)}
+.badge{display:inline-flex;gap:5px;align-items:center;font-size:12px;padding:4px 10px;border-radius:8px}
+.badge.ok{background:var(--success-bg);color:var(--success)}.badge.bad{background:var(--danger-bg);color:var(--danger)}.badge.info{background:var(--info-bg);color:var(--info)}.badge.muted2{background:var(--surface2);color:var(--muted)}.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;flex-shrink:0}
+.avatar.none{background:var(--surface2);color:var(--faint)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13px;border-top:1px solid var(--border)}
+.vrow{display:flex;gap:9px}.vrow input{flex:1}
+.crow{display:grid;grid-template-columns:18px 150px 1fr;gap:9px;align-items:center;padding:7px 0;border-top:1px solid var(--border);font-size:13px}
+.crow .src{color:var(--muted)}.crow .det.muted{color:var(--faint)}
+.checks-label{font-size:12px;color:var(--muted);margin:13px 0 4px}
+.dash-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.kpi .lab{font-size:12px;color:var(--muted)}.kpi .num{font-size:25px;font-weight:600;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.panel h3{font-size:14px;font-weight:600;margin:0 0 4px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}.sw{width:11px;height:11px;border-radius:50%}
+.bars{display:flex;align-items:flex-end;gap:9px;height:90px;margin-top:6px}
+.bars>div{flex:1;background:var(--info-bg);border-radius:4px 4px 0 0}.bars>div.last{background:var(--info)}
+.feed .row:first-child{border-top:none}
+table.reg{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+table.reg th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.reg td{padding:8px;border-bottom:1px solid var(--border)}
+.databar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px}
+.databar .spacer{flex:1}
+.btn.file{position:relative;overflow:hidden}.btn.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.foot{text-align:center;color:var(--faint);font-size:12px;margin-top:24px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" class="i" style="width:21px;height:21px"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg></span>
+    <div><h1>SaferMotorcycling</h1><p>NRSA digital platform · prototype with real-data verification</p></div>
+  </div>
+  <div class="seg">
+    <button id="seg-field" class="on" onclick="topView('field')">Field app</button>
+    <button id="seg-command" onclick="topView('command')">Command centre</button>
+  </div>
+</div>
+
+<div class="view on" id="v-field">
+<div class="stage">
+<div class="phone">
+<div class="phbar">
+  <div class="lg"><svg viewBox="0 0 24 24" class="i"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg>
+  <div><div style="font-size:14px;font-weight:600;line-height:1.15">SaferMotorcycling</div><div class="small muted" style="line-height:1.3">NRSA field app</div></div></div>
+  <span class="badge muted2" id="rolechip">home</span>
+</div>
+<div class="phbody">
+
+<div class="scr on" id="s-home">
+  <p class="h">What do you want to do?</p>
+  <button class="rolecard" onclick="go('register')"><span class="ic" style="background:var(--info-bg);color:var(--info)"><svg viewBox="0 0 24 24" class="i"><circle cx="9" cy="8" r="3.4"/><path d="M3.6 20 c0 -3.6 3 -5.6 5.4 -5.6 c1 0 2 .3 2.8 .8"/><line x1="17.5" y1="13.5" x2="17.5" y2="20"/><line x1="14.2" y1="16.7" x2="20.8" y2="16.7"/></svg></span><span style="flex:1"><b style="font-weight:600">Register a rider</b><br><span class="muted small">Digital warden · onboarding</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <button class="rolecard" onclick="go('verify')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg></span><span style="flex:1"><b style="font-weight:600">Verify a rider</b><br><span class="muted small">Passenger or police · look up</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <button class="rolecard" onclick="topView('command')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="6.5" width="3" height="11.5"/><rect x="16" y="13.5" width="3" height="4.5"/></svg></span><span style="flex:1"><b style="font-weight:600">Command centre</b><br><span class="muted small">NRSA oversight dashboard</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <p class="small faint" style="margin-top:14px;line-height:1.6">Verification runs against the loaded rider list. Import NRSA's real data in the command centre.</p>
+  <button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="sendSOS()"><svg viewBox="0 0 24 24" class="i"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="16.6" x2="12" y2="16.7"/></svg>Send emergency SOS</button>
+</div>
+
+<div class="scr" id="s-register">
+  <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
+  <p class="h" style="margin-bottom:2px">Register rider</p>
+  <div class="dots"><span class="dot" id="rdot1"></span><span class="dot" id="rdot2"></span><span class="dot" id="rdot3"></span><span class="dot" id="rdot4"></span></div>
+  <div class="stp on" id="rstep1">
+    <p class="small muted" style="margin:0">Step 1 · identity (NIA)</p>
+    <label class="lbl">Ghana Card number</label><input type="text" id="reg-card" value="GHA-725300119-4" />
+    <label class="lbl">Full name</label><input type="text" id="reg-name" value="Kwabena Asante" />
+    <button class="btn primary" onclick="reveal('nia-res','nia-cont')"><svg viewBox="0 0 24 24" class="i"><path d="M12 5 c-4 0 -6 3 -6 6 v3"/><path d="M12 8 c-2.4 0 -3.4 2 -3.4 4 v3"/><path d="M12 11 v5"/><path d="M18 11 c0 -4 -3 -6 -6 -6"/></svg>Verify with NIA</button>
+    <div id="nia-res" style="display:none;margin-top:13px"><span class="badge ok"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>verified against national identity register</span></div>
+    <button class="btn" id="nia-cont" style="display:none" onclick="regStep(2)">Continue</button>
+  </div>
+  <div class="stp" id="rstep2">
+    <p class="small muted" style="margin:0">Step 2 · the bike</p>
+    <label class="lbl">Plate / registration</label><input type="text" id="reg-plate" value="NR 7788-24" />
+    <label class="lbl">Vehicle type</label><select id="reg-type"><option>Motorcycle</option><option>Tricycle</option></select>
+    <label class="lbl">Engine / emissions class</label><select><option>Petrol — 2-stroke</option><option>Petrol — 4-stroke</option><option>Electric</option></select>
+    <button class="btn primary" onclick="regStep(3)">Continue</button>
+  </div>
+  <div class="stp" id="rstep3">
+    <p class="small muted" style="margin:0 0 8px">Step 3 · insurance (NIC / MID)</p>
+    <p class="small" style="margin:0">Third-party cover is mandatory under the 2025 Act.</p>
+    <button class="btn primary" onclick="reveal('mid-res','mid-cont')"><svg viewBox="0 0 24 24" class="i"><path d="M12 3 l7 3 v5 c0 4 -3 7 -7 8 c-4 -1 -7 -4 -7 -8 v-5 z"/><polyline points="9 12 11 14 15 10"/></svg>Check MID</button>
+    <div id="mid-res" style="display:none;margin-top:13px"><span class="badge ok"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>policy valid · exp 12/2026 · via NIC MID</span></div>
+    <button class="btn" id="mid-cont" style="display:none" onclick="regStep(4)">Continue</button>
+  </div>
+  <div class="stp" id="rstep4">
+    <p class="small muted" style="margin:0 0 8px">Step 4 · smart tag</p>
+    <p class="small" style="margin:0">Issue a tamper-evident tag and bind it to the rider + bike.</p>
+    <button class="btn primary" onclick="reveal('tag-res','tag-cont')"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg>Generate &amp; bind tag</button>
+    <div id="tag-res" style="display:none;margin-top:14px;text-align:center">
+      <svg viewBox="0 0 84 84" width="92" height="92" style="display:inline-block"><g fill="var(--text)"><rect x="2" y="2" width="20" height="20"/><rect x="5" y="5" width="14" height="14" fill="var(--bg)"/><rect x="8" y="8" width="8" height="8"/><rect x="62" y="2" width="20" height="20"/><rect x="65" y="5" width="14" height="14" fill="var(--bg)"/><rect x="68" y="8" width="8" height="8"/><rect x="2" y="62" width="20" height="20"/><rect x="5" y="65" width="14" height="14" fill="var(--bg)"/><rect x="8" y="68" width="8" height="8"/><rect x="28" y="6" width="5" height="5"/><rect x="40" y="6" width="5" height="5"/><rect x="52" y="14" width="5" height="5"/><rect x="30" y="30" width="5" height="5"/><rect x="42" y="36" width="5" height="5"/><rect x="54" y="30" width="5" height="5"/><rect x="66" y="40" width="5" height="5"/><rect x="6" y="40" width="5" height="5"/><rect x="18" y="48" width="5" height="5"/><rect x="36" y="54" width="5" height="5"/><rect x="48" y="60" width="5" height="5"/><rect x="60" y="58" width="5" height="5"/><rect x="72" y="66" width="5" height="5"/><rect x="30" y="68" width="5" height="5"/></g></svg>
+      <div class="mono" style="font-size:13px;margin-top:4px">NRSA-TAG-0A1B2C</div>
+      <span class="badge ok" style="margin-top:9px"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>activated · bound to rider + bike</span>
+    </div>
+    <button class="btn primary" id="tag-cont" style="display:none" onclick="finishReg()"><svg viewBox="0 0 24 24" class="i"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg>Finish — add to registry</button>
+  </div>
+</div>
+
+<div class="scr" id="s-verify">
+  <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
+  <p class="h">Verify a rider</p>
+  <p class="small muted" style="margin:0 0 8px">Look up against the registry by plate, name or Ghana Card.</p>
+  <div class="vrow"><input type="text" id="vq" placeholder="NR 4821-19 · Yakubu · GHA-…" /><button class="btn primary" style="width:auto;margin:0;padding:0 14px" onclick="doVerify()"><svg viewBox="0 0 24 24" class="i"><circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg></button></div>
+  <button class="btn" onclick="simScan()"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/></svg>Simulate tag scan</button>
+  <div id="vres" style="margin-top:14px"></div>
+</div>
+
+</div>
+<div class="phnav">
+  <button id="t-home" class="on" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><path d="M4 11 l8 -6 l8 6"/><path d="M6 10 v9 h12 v-9"/></svg>home</button>
+  <button id="t-verify" onclick="go('verify')"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/></svg>verify</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="view" id="v-command">
+  <div class="dash-head">
+    <div><h2 style="margin:0;font-size:18px">NRSA command centre</h2><p class="small muted" style="margin:2px 0 0">Live oversight · <span id="regionLabel">Greater Accra</span></p></div>
+    <span class="badge muted2" id="srcBadge">sample data</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <div class="seg">
+      <button id="rg-accra" class="on" onclick="switchRegion('Accra')">Greater Accra</button>
+      <button id="rg-tamale" onclick="switchRegion('Tamale')">Tamale metro</button>
+    </div>
+    <span class="small faint">+ 14 more regions ready to switch on</span>
+  </div>
+  <div class="databar">
+    <span><b id="loadCount">0</b> riders in loaded registry</span>
+    <span class="muted">source: <span id="srcName">sample</span></span>
+    <span class="spacer"></span>
+    <label class="btn file sm">import NRSA CSV<input type="file" id="importInput" accept=".csv,text/csv" /></label>
+    <button class="btn sm" onclick="resetData()">reset to sample</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">registered riders</div><div class="num" id="m-reg">0</div></div>
+    <div class="kpi"><div class="lab">riders insured</div><div class="num" id="m-ins">0%</div></div>
+    <div class="kpi"><div class="lab">verifications today</div><div class="num" id="m-ver">0</div></div>
+    <div class="kpi"><div class="lab">avg safety score</div><div class="num" id="m-score">0</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Crash &amp; violation hotspots</h3>
+      <p class="small muted" style="margin:0 0 4px">Last 90 days · illustrative · hover a point</p>
+      <div id="map-Accra">
+      <svg viewBox="0 0 600 330" width="100%" style="display:block">
+        <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
+        <path d="M0 288 Q150 278 300 288 T600 286 L600 330 L0 330 Z" fill="#bcd6ee" opacity="0.55"/>
+        <g stroke="#d9d7cd" stroke-width="7" stroke-linecap="round">
+          <line x1="40" y1="262" x2="560" y2="262"/>
+          <line x1="300" y1="150" x2="300" y2="258"/>
+          <line x1="300" y1="150" x2="540" y2="205"/>
+          <line x1="300" y1="150" x2="70" y2="212"/>
+          <line x1="300" y1="150" x2="415" y2="62"/>
+          <line x1="300" y1="150" x2="190" y2="70"/>
+        </g>
+        <circle cx="300" cy="150" r="60" stroke="#cfcdc3" stroke-width="6" fill="none"/><circle cx="300" cy="150" r="7" fill="#9b998f"/>
+        <g>
+          <circle cx="300" cy="150" r="26" fill="#b3261e" opacity="0.20"/><circle cx="300" cy="150" r="6" fill="#b3261e"><title>Kwame Nkrumah Circle · 24 crashes / 90 days · high</title></circle>
+          <circle cx="205" cy="185" r="24" fill="#b3261e" opacity="0.20"/><circle cx="205" cy="185" r="6" fill="#b3261e"><title>Kaneshie / Lapaz · 21 crashes / 90 days · high</title></circle>
+          <circle cx="520" cy="200" r="22" fill="#b3261e" opacity="0.20"/><circle cx="520" cy="200" r="6" fill="#b3261e"><title>Tema station · 17 crashes / 90 days · high</title></circle>
+          <circle cx="415" cy="62" r="18" fill="#d99000" opacity="0.22"/><circle cx="415" cy="62" r="5" fill="#9a6b00"><title>Madina · 11 crashes / 90 days · watch</title></circle>
+          <circle cx="430" cy="165" r="18" fill="#d99000" opacity="0.22"/><circle cx="430" cy="165" r="5" fill="#9a6b00"><title>Tetteh Quarshie / Spintex · 10 crashes / 90 days · watch</title></circle>
+          <circle cx="190" cy="70" r="16" fill="#d99000" opacity="0.22"/><circle cx="190" cy="70" r="5" fill="#9a6b00"><title>Achimota · 8 crashes / 90 days · watch</title></circle>
+          <circle cx="72" cy="212" r="16" fill="#d99000" opacity="0.22"/><circle cx="72" cy="212" r="5" fill="#9a6b00"><title>Kasoa road · 7 crashes / 90 days · watch</title></circle>
+        </g>
+        <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif"><text x="308" y="146">Circle</text><text x="150" y="202">Kaneshie</text><text x="498" y="226">Tema</text><text x="392" y="58">Madina</text><text x="402" y="186">Spintex</text><text x="150" y="66">Achimota</text><text x="40" y="208">Kasoa</text><text x="486" y="282" opacity="0.85">Gulf of Guinea</text></g>
+      </svg>
+      </div>
+      <div id="map-Tamale" style="display:none">
+      <svg viewBox="0 0 600 330" width="100%" style="display:block">
+        <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
+        <path d="M40 250 C160 210 220 260 320 220 C420 180 520 230 580 200" stroke="#bcd6ee" stroke-width="6" fill="none" opacity="0.7"/>
+        <g stroke="#d9d7cd" stroke-width="7" stroke-linecap="round"><line x1="300" y1="165" x2="300" y2="30"/><line x1="300" y1="165" x2="300" y2="300"/><line x1="300" y1="165" x2="560" y2="165"/><line x1="300" y1="165" x2="60" y2="165"/><line x1="300" y1="165" x2="470" y2="70"/><line x1="300" y1="165" x2="470" y2="260"/><line x1="300" y1="165" x2="140" y2="70"/><line x1="300" y1="165" x2="140" y2="260"/></g>
+        <circle cx="300" cy="165" r="118" stroke="#cfcdc3" stroke-width="6" fill="none"/><circle cx="300" cy="165" r="8" fill="#9b998f"/>
+        <g>
+          <circle cx="384" cy="100" r="26" fill="#b3261e" opacity="0.20"/><circle cx="384" cy="100" r="6" fill="#b3261e"><title>Aboabo junction · 18 crashes / 90 days · high</title></circle>
+          <circle cx="418" cy="165" r="24" fill="#b3261e" opacity="0.20"/><circle cx="418" cy="165" r="6" fill="#b3261e"><title>Central market · 15 crashes / 90 days · high</title></circle>
+          <circle cx="300" cy="47" r="19" fill="#d99000" opacity="0.22"/><circle cx="300" cy="47" r="5" fill="#9a6b00"><title>Education ridge · 9 crashes / 90 days · watch</title></circle>
+          <circle cx="384" cy="232" r="19" fill="#d99000" opacity="0.22"/><circle cx="384" cy="232" r="5" fill="#9a6b00"><title>Lamashegu junction · 8 crashes / 90 days · watch</title></circle>
+          <circle cx="300" cy="285" r="17" fill="#d99000" opacity="0.22"/><circle cx="300" cy="285" r="5" fill="#9a6b00"><title>Kalpohin · 6 crashes / 90 days · watch</title></circle>
+          <circle cx="190" cy="165" r="16" fill="#d99000" opacity="0.22"/><circle cx="190" cy="165" r="5" fill="#9a6b00"><title>Sagnarigu road · 5 crashes / 90 days · watch</title></circle>
+        </g>
+        <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif"><text x="392" y="96">Aboabo</text><text x="426" y="162">Central market</text><text x="262" y="40">Education ridge</text><text x="392" y="236">Lamashegu</text><text x="262" y="303">Kalpohin</text><text x="118" y="162">Sagnarigu</text></g>
+      </svg>
+      </div>
+      <div class="legend"><span><span class="sw" style="background:#b3261e"></span>high-risk junction</span><span><span class="sw" style="background:#9a6b00"></span>watch</span><span><span class="sw" style="background:#bcd6ee"></span>water</span></div>
+    </div>
+    <div class="panel">
+      <h3>Registrations per week</h3>
+      <div class="bars"><div style="height:34%"></div><div style="height:46%"></div><div style="height:41%"></div><div style="height:64%"></div><div style="height:79%"></div><div class="last" style="height:100%"></div></div>
+      <p class="small muted" style="margin:6px 0 0">Trending up as wardens onboard riders.</p>
+      <h3 style="margin-top:18px">Recent activity <span id="liveDot" style="font-size:11px;color:var(--faint);font-weight:400">· offline</span></h3>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>Incident log <span class="small muted" style="font-weight:400">· all SOS &amp; dispatch records (newest first)</span></h3>
+    <div class="vrow" style="margin:4px 0 8px"><input type="text" id="incLogSearch" placeholder="search rider, location, status, type, region" /></div>
+    <table class="reg"><thead><tr><th>time</th><th>type</th><th>rider</th><th>location</th><th>region</th><th>status</th><th>source</th></tr></thead><tbody id="incLogBody"></tbody></table>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400">(<span id="tel-devices">0</span> devices fitted)</span></h3>
+    <p class="small muted" style="margin:0 0 10px">From on-bike GPS + motion trackers · these events feed each rider's 0–100 safety score</p>
+    <div id="telBars"></div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>Registry — <span id="regRegionLabel">Greater Accra</span></h3>
+    <div class="vrow" style="margin:4px 0 8px"><input type="text" id="regSearch" placeholder="search name, plate, licence, union, district" /></div>
+    <table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table>
+  </div>
+</div>
+
+<div class="foot">SaferMotorcycling · NRSA · prototype · regional figures are illustrative; registry runs on the loaded list (sample or imported). Handle real data under Act 843.</div>
+</div>
+
+<div id="incModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeIncident()">
+  <div style="background:var(--bg);border-radius:var(--radius-lg);max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:18px"><div id="incBody"></div></div>
+</div>
+
+<script>
+var RIDERS = [
+ {full_name:"Abdul-Rahman Mohammed",ghana_card:"GHA-418200731-6",licence_no:"142398",union:"GPRTU",plate:"NR 2841-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:86,status:"active"},
+ {full_name:"Fuseini Iddrisu",ghana_card:"GHA-733910228-1",licence_no:"305712",union:"Okada Riders Assoc.",plate:"NR 5560-23",vehicle_type:"Motorcycle",district:"Sagnarigu",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-08",license_status:"valid",safety_score:78,status:"active"},
+ {full_name:"Mariama Alhassan",ghana_card:"GHA-205663419-4",licence_no:"588104",union:"Tricycle Operators Union",plate:"NR 1107-22",vehicle_type:"Tricycle",district:"Tamale",region:"Tamale",insurance_status:"lapsed",insurance_expiry:"2025-11",license_status:"valid",safety_score:64,status:"pending"},
+ {full_name:"Yakubu Sulemana",ghana_card:"GHA-661280537-9",licence_no:"070667",union:"GPRTU",plate:"NR 0934-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2027-01",license_status:"valid",safety_score:92,status:"active"},
+ {full_name:"Yaw Boateng",ghana_card:"GHA-509172648-3",licence_no:"219476",union:"Okada Riders Assoc.",plate:"NR 4821-19",vehicle_type:"Motorcycle",district:"Sagnarigu",region:"Tamale",insurance_status:"lapsed",insurance_expiry:"2025-06",license_status:"expired",safety_score:41,status:"suspended"},
+ {full_name:"Adisa Abukari",ghana_card:"GHA-374905162-7",licence_no:"663201",union:"GPRTU",plate:"NR 3312-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-09",license_status:"valid",safety_score:80,status:"active"},
+ {full_name:"Hawa Issah",ghana_card:"GHA-148662093-5",licence_no:"730024",union:"Tricycle Operators Union",plate:"NR 2206-23",vehicle_type:"Tricycle",district:"Kumbungu",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-07",license_status:"valid",safety_score:73,status:"active"},
+ {full_name:"Razak Mahama",ghana_card:"GHA-880214557-2",licence_no:"156833",union:"Okada Riders Assoc.",plate:"NR 9041-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"none",insurance_expiry:"",license_status:"valid",safety_score:58,status:"pending"},
+ {full_name:"Salamatu Yakubu",ghana_card:"GHA-312078846-8",licence_no:"904517",union:"GPRTU",plate:"NR 1559-22",vehicle_type:"Motorcycle",district:"Savelugu",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-10",license_status:"valid",safety_score:84,status:"active"},
+ {full_name:"Iddrisu Mumuni",ghana_card:"GHA-557390014-6",licence_no:"348209",union:"GPRTU",plate:"NR 6623-24",vehicle_type:"Motorcycle",district:"Sagnarigu",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-11",license_status:"valid",safety_score:90,status:"active"},
+ {full_name:"Comfort Adjei",ghana_card:"GHA-906145238-1",licence_no:"612740",union:"Tricycle Operators Union",plate:"NR 4470-21",vehicle_type:"Tricycle",district:"Tamale",region:"Tamale",insurance_status:"lapsed",insurance_expiry:"2025-09",license_status:"valid",safety_score:67,status:"active"},
+ {full_name:"Sumaila Abdulai",ghana_card:"GHA-233817902-4",licence_no:"275189",union:"Okada Riders Assoc.",plate:"NR 8852-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2027-02",license_status:"valid",safety_score:95,status:"active"},
+ {full_name:"Ayisha Fuseini",ghana_card:"GHA-471096325-7",licence_no:"830561",union:"GPRTU",plate:"NR 1934-23",vehicle_type:"Motorcycle",district:"Kumbungu",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-06",license_status:"valid",safety_score:79,status:"active"},
+ {full_name:"Daniel Nuhu",ghana_card:"GHA-684520177-9",licence_no:"419302",union:"Okada Riders Assoc.",plate:"NR 5018-19",vehicle_type:"Motorcycle",district:"Sagnarigu",region:"Tamale",insurance_status:"none",insurance_expiry:"",license_status:"expired",safety_score:38,status:"suspended"},
+ {full_name:"Memuna Seidu",ghana_card:"GHA-129703468-2",licence_no:"567418",union:"Tricycle Operators Union",plate:"NR 7245-24",vehicle_type:"Tricycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:82,status:"active"},
+ {full_name:"Osman Tahiru",ghana_card:"GHA-590338721-5",licence_no:"092683",union:"GPRTU",plate:"NR 3390-24",vehicle_type:"Motorcycle",district:"Tamale",region:"Tamale",insurance_status:"valid",insurance_expiry:"2026-08",license_status:"valid",safety_score:76,status:"active"},
+ {full_name:"Kofi Mensah",ghana_card:"GHA-781450926-3",licence_no:"481209",union:"Okada Riders Assoc.",plate:"GR 4471-24",vehicle_type:"Motorcycle",district:"Accra Metro",region:"Accra",insurance_status:"valid",insurance_expiry:"2026-11",license_status:"valid",safety_score:83,status:"active"},
+ {full_name:"Ama Owusu",ghana_card:"GHA-540982137-1",licence_no:"552310",union:"GPRTU",plate:"GW 1192-23",vehicle_type:"Tricycle",district:"Ga West",region:"Accra",insurance_status:"valid",insurance_expiry:"2026-09",license_status:"valid",safety_score:88,status:"active"},
+ {full_name:"Ibrahim Salifu",ghana_card:"GHA-369014825-7",licence_no:"309845",union:"Okada Riders Assoc.",plate:"GS 7740-24",vehicle_type:"Motorcycle",district:"Ashaiman",region:"Accra",insurance_status:"lapsed",insurance_expiry:"2025-10",license_status:"valid",safety_score:62,status:"pending"},
+ {full_name:"Joseph Tetteh",ghana_card:"GHA-902316744-5",licence_no:"661450",union:"GPRTU",plate:"GT 2218-24",vehicle_type:"Motorcycle",district:"Tema",region:"Accra",insurance_status:"valid",insurance_expiry:"2027-01",license_status:"valid",safety_score:91,status:"active"},
+ {full_name:"Mavis Adjei",ghana_card:"GHA-118273905-6",licence_no:"178902",union:"Tricycle Operators Union",plate:"GE 5563-22",vehicle_type:"Tricycle",district:"Madina",region:"Accra",insurance_status:"valid",insurance_expiry:"2026-08",license_status:"valid",safety_score:77,status:"active"},
+ {full_name:"Kwesi Boadu",ghana_card:"GHA-650298411-2",licence_no:"423178",union:"Okada Riders Assoc.",plate:"GR 9981-19",vehicle_type:"Motorcycle",district:"Dansoman",region:"Accra",insurance_status:"none",insurance_expiry:"",license_status:"expired",safety_score:39,status:"suspended"},
+ {full_name:"Akosua Frimpong",ghana_card:"GHA-274905613-8",licence_no:"815623",union:"GPRTU",plate:"GA 3307-24",vehicle_type:"Motorcycle",district:"Adenta",region:"Accra",insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:85,status:"active"},
+ {full_name:"Mohammed Awal",ghana_card:"GHA-583071269-4",licence_no:"254613",union:"Okada Riders Assoc.",plate:"GT 6648-23",vehicle_type:"Motorcycle",district:"Teshie",region:"Accra",insurance_status:"valid",insurance_expiry:"2026-07",license_status:"valid",safety_score:80,status:"active"}
+];
+var SAMPLE = RIDERS.slice();
+var srcName = "sample";
+
+var REGIONS = {
+  Accra: { label:"Greater Accra", reg:8420, insured:88, verif:1960, score:79, telematics:{devices:540,harshBrake:16,speeding:11,cornering:8,night:28}, feed:[
+    {t:"SOS resolved · Kwame Nkrumah Circle", ago:"6m", kind:"sos"},
+    {t:"tag flagged · insurance lapsed · Dansoman", ago:"40m", kind:"flag"},
+    {t:"new rider verified · GT 2218-24", ago:"1h", kind:"ok"}
+  ]},
+  Tamale: { label:"Tamale metro", reg:1284, insured:91, verif:342, score:81, telematics:{devices:210,harshBrake:11,speeding:7,cornering:5,night:19}, feed:[
+    {t:"SOS resolved · Aboabo junction", ago:"12m", kind:"sos"},
+    {t:"tag flagged · insurance lapsed", ago:"1h", kind:"flag"}
+  ]}
+};
+var current = "Accra";
+var BACKEND = (location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'http://localhost:8787';
+var LIVE_INCIDENTS = [];
+var ALL_INCIDENTS = [];
+
+function $(id){return document.getElementById(id);}
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];});}
+function norm(s){return (s||"").toString().trim().toLowerCase();}
+function noSpace(s){return norm(s).replace(/\s+/g,"");}
+
+function topView(name){['field','command'].forEach(function(v){$('v-'+v).classList.toggle('on',v===name);$('seg-'+v).classList.toggle('on',v===name);});window.scrollTo(0,0);}
+function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
+function regStep(n){for(var i=1;i<=4;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
+function reveal(a,b){var e=$(a);if(e)e.style.display='block';if(b){var c=$(b);if(c)c.style.display='block';}}
+function resetReg(){regStep(1);['nia-res','nia-cont','mid-res','mid-cont','tag-res','tag-cont'].forEach(function(id){var e=$(id);if(e)e.style.display='none';});}
+
+function findInRegistry(q){var s=norm(q);if(!s)return null;var sn=noSpace(q);return RIDERS.find(function(r){return norm(r.ghana_card)===s||noSpace(r.plate)===sn||norm(r.licence_no)===s||norm(r.full_name).indexOf(s)!==-1;})||null;}
+function checks(r){return [
+  {src:"NIA — Ghana Card",ok:!!r,det:r?("matches "+r.full_name):"no match"},
+  {src:"NIC — MID (insurance)",ok:!!(r&&r.insurance_status==="valid"),det:r?("insurance "+r.insurance_status+(r.insurance_expiry?" · exp "+r.insurance_expiry:"")):"unknown"},
+  {src:"DVLA — licence",ok:!!(r&&r.license_status==="valid"),det:r?("licence "+r.license_status+(r.licence_no?" · "+r.licence_no:"")):"unknown"}
+];}
+function crow(c){var ic=c.ok?'<svg viewBox="0 0 24 24" class="i ok"><polyline points="5 12 10 17 19 7"/></svg>':'<svg viewBox="0 0 24 24" class="i bad"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';return '<div class="crow">'+ic+'<span class="src">'+esc(c.src)+'</span><span class="det '+(c.ok?'':'muted')+'">'+esc(c.det)+'</span></div>';}
+function renderVerify(r,q){
+  var box=$('vres');
+  if(!r){box.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:12px"><div class="avatar none">?</div><div><div style="font-weight:600">Not in registry</div><div class="small muted">"'+esc(q)+'" was not found</div></div></div></div>';return;}
+  var ini=(r.full_name||"?").split(/\s+/).map(function(w){return w[0];}).slice(0,2).join("").toUpperCase();
+  var good=r.status==="active"&&r.insurance_status==="valid"&&r.license_status==="valid";
+  var badge=good?'<span class="badge ok"><svg viewBox="0 0 24 24" class="i"><path d="M12 3 l7 3 v5 c0 4 -3 7 -7 8 c-4 -1 -7 -4 -7 -8 v-5 z"/><polyline points="9 12 11 14 15 10"/></svg>verified</span>':'<span class="badge bad"><svg viewBox="0 0 24 24" class="i"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="16.6" x2="12" y2="16.7"/></svg>'+esc(r.status==="suspended"?"suspended":"review")+'</span>';
+  var rows=checks(r).map(crow).join("");
+  box.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:12px"><div class="avatar">'+esc(ini)+'</div><div style="flex:1"><div style="font-weight:600">'+esc(r.full_name)+'</div><div class="small muted mono">'+esc(r.plate)+' · '+esc(r.vehicle_type)+' · '+esc(r.district)+'</div></div>'+badge+'</div>'+'<div class="row" style="margin-top:6px"><span class="muted">union</span><span>'+esc(r.union||"—")+'</span></div>'+'<div class="row"><span class="muted">safety score</span><span>'+esc(r.safety_score)+' / 100</span></div>'+'<div class="checks-label">external checks</div>'+rows+'</div>';
+}
+function doVerify(){var q=$('vq').value;if(!q.trim()){$('vres').innerHTML='';return;}renderVerify(findInRegistry(q),q);}
+function simScan(){var r=RIDERS[0];$('vq').value=r.plate;renderVerify(r,r.plate);}
+
+function finishReg(){
+  var r={full_name:$('reg-name').value||"New rider",ghana_card:$('reg-card').value||"",licence_no:"",union:"GPRTU",plate:$('reg-plate').value||"",vehicle_type:$('reg-type').value||"Motorcycle",district:(current==='Accra'?'Accra Metro':'Tamale'),region:current,insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:80,status:"active"};
+  RIDERS.unshift(r);
+  REGIONS[current].reg++;
+  REGIONS[current].feed.unshift({t:"new rider registered · "+r.plate, ago:"now", kind:"ok"});
+  switchRegion(current);
+  recompute();
+  go('home');topView('command');
+}
+
+function setLiveDot(ok){var e=$('liveDot');if(e){e.textContent=ok?'· live':'· offline';e.style.color=ok?'var(--success)':'var(--faint)';}}
+function pollIncidents(){
+  fetch(BACKEND+'/incidents')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      ALL_INCIDENTS=(d&&d.incidents)||[];
+      LIVE_INCIDENTS=ALL_INCIDENTS.filter(function(i){return i.region===current;});
+      setLiveDot(true);renderFeed();renderIncidentLog($('incLogSearch')?$('incLogSearch').value:'');
+    })
+    .catch(function(){setLiveDot(false);});
+}
+function incBadge(s){var c=(s==='resolved')?'ok':((s==='open')?'warn':'info');return '<span class="badge '+c+'">'+esc(s||'')+'</span>';}
+function fmtShort(ts){try{var d=new Date(ts);return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(e){return ts;}}
+function renderIncidentLog(filter){
+  var body=$('incLogBody');if(!body)return;
+  var f=norm(filter);
+  var rows=ALL_INCIDENTS.filter(function(i){
+    if(!f)return true;
+    var hay=[(i.rider&&i.rider.plate)||'',(i.rider&&i.rider.name)||'',(i.location&&i.location.name)||'',i.status||'',i.type||'',i.region||'',i.source||''].join(' ').toLowerCase();
+    return hay.indexOf(f)!==-1;
+  });
+  body.innerHTML=rows.map(function(i){
+    var where=(i.location&&i.location.name)||'—';var who=(i.rider&&i.rider.plate)||'—';
+    return '<tr style="cursor:pointer" onclick="openIncident(\''+i.id+'\')"><td class="mono">'+esc(fmtShort(i.ts))+'</td><td>'+esc(i.type||'')+'</td><td class="mono">'+esc(who)+'</td><td>'+esc(where)+'</td><td>'+esc(i.region||'')+'</td><td>'+incBadge(i.status)+'</td><td>'+esc(i.source||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="muted" style="text-align:center;padding:14px">no incidents yet</td></tr>';
+}
+function regionRiders(){return RIDERS.filter(function(r){return (r.region||current)===current;});}
+function sendSOS(){
+  var pool=regionRiders();var r=pool[Math.floor(Math.random()*pool.length)]||{};
+  var base=current==='Accra'?{lat:5.56,lng:-0.20}:{lat:9.40,lng:-0.84};
+  var loc={name:(current==='Accra'?'Ring Road East':'Aboabo junction'),lat:Number((base.lat+(Math.random()-0.5)*0.05).toFixed(4)),lng:Number((base.lng+(Math.random()-0.5)*0.05).toFixed(4)),digital_address:(current==='Accra'?'GA':'NT')+'-'+Math.floor(100+Math.random()*800)+'-'+Math.floor(1000+Math.random()*8000)};
+  var payload={type:'sos',trigger:'manual',reported_by:'rider',region:current,source:'app',rider:{plate:r.plate||'(this rider)',name:r.full_name||'',licence_no:r.licence_no||'',union:r.union||'',insurance_status:r.insurance_status||''},location:loc,telematics:{speed_before_kmh:Math.floor(30+Math.random()*40),impact_g:0}};
+  fetch(BACKEND+'/incidents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(res){return res.json();})
+    .then(function(d){topView('command');pollIncidents();if(d&&d.incident){setTimeout(function(){openIncident(d.incident.id);},250);}})
+    .catch(function(){alert('SOS could not reach the backend. Open this page via http://localhost (not file://) and make sure the proxy on :8787 is running.');});
+}
+function fmtTime(ts){try{return new Date(ts).toLocaleString();}catch(e){return ts;}}
+function openIncident(id){
+  fetch(BACKEND+'/incidents/'+id).then(function(r){return r.json();}).then(function(d){if(d&&d.incident)renderIncident(d.incident);}).catch(function(){var a=LIVE_INCIDENTS.filter(function(x){return x.id===id;});if(a[0])renderIncident(a[0]);});
+}
+function renderIncident(i){
+  var r=i.rider||{},loc=i.location||{},tel=i.telematics||{};
+  var hist=(i.status_history||[]).map(function(h){return '<div class="row" style="padding:5px 0"><span class="muted">'+esc(h.status)+'</span><span class="faint">'+esc(fmtTime(h.ts))+'</span></div>';}).join('');
+  var actions='';
+  if(i.status!=='resolved'){var next=({open:'acknowledged',acknowledged:'dispatched',dispatched:'resolved'})[i.status]||'resolved';actions='<button class="btn primary" style="margin:0;width:auto" onclick="advanceStatus(\''+i.id+'\',\''+next+'\')">Mark '+next+'</button>';}
+  $('incBody').innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h3 style="margin:0;font-size:16px">'+esc((i.type||'sos').toUpperCase())+' incident</h3>'+incBadge(i.status)+'</div>'+
+    '<div class="small muted mono" style="margin:2px 0 12px">'+esc(i.id)+'</div>'+
+    '<div class="card" style="margin-bottom:10px"><div style="font-weight:600">'+esc(r.name||'(unknown rider)')+'</div><div class="small muted mono">'+esc(r.plate||'—')+' · licence '+esc(r.licence_no||'—')+'</div><div class="row"><span class="muted">union</span><span>'+esc(r.union||'—')+'</span></div><div class="row"><span class="muted">insurance</span><span>'+esc(r.insurance_status||'—')+'</span></div></div>'+
+    '<div class="row"><span class="muted">location</span><span>'+esc(loc.name||'—')+'</span></div>'+
+    '<div class="row"><span class="muted">coordinates</span><span class="mono">'+esc((loc.lat!=null?loc.lat:'—')+', '+(loc.lng!=null?loc.lng:'—'))+'</span></div>'+
+    '<div class="row"><span class="muted">digital address</span><span class="mono">'+esc(loc.digital_address||'—')+'</span></div>'+
+    '<div class="row"><span class="muted">region</span><span>'+esc(i.region||'—')+'</span></div>'+
+    '<div class="row"><span class="muted">trigger</span><span>'+esc(i.trigger||'—')+' · '+esc(i.reported_by||'—')+'</span></div>'+
+    '<div class="row"><span class="muted">source</span><span>'+esc(i.source||'—')+'</span></div>'+
+    '<div class="row"><span class="muted">speed before</span><span>'+esc(tel.speed_before_kmh!=null?tel.speed_before_kmh+' km/h':'—')+(tel.impact_g?' · impact '+tel.impact_g+'g':'')+'</span></div>'+
+    '<div class="row"><span class="muted">reported at</span><span>'+esc(fmtTime(i.ts))+'</span></div>'+
+    '<div class="checks-label">status lifecycle</div>'+hist+
+    '<div style="margin-top:14px;display:flex;gap:8px">'+actions+'<button class="btn" style="margin:0;width:auto" onclick="closeIncident()">Close</button></div>';
+  $('incModal').style.display='flex';
+}
+function advanceStatus(id,status){
+  fetch(BACKEND+'/incidents/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})})
+    .then(function(r){return r.json();}).then(function(d){if(d&&d.incident){renderIncident(d.incident);pollIncidents();}})
+    .catch(function(){alert('Could not update status (backend unreachable).');});
+}
+function closeIncident(){$('incModal').style.display='none';}
+function renderFeed(){
+  var live=LIVE_INCIDENTS.map(function(i){
+    var where=(i.location&&i.location.name)||(i.rider&&i.rider.plate)||current;
+    return {id:i.id,t:(i.type==='sos'?'SOS':i.type)+' · '+where,ago:(i.status==='resolved'?'resolved':(i.status||'live')),kind:(i.status==='resolved'?'ok':'sos'),live:true};
+  });
+  var all=live.concat(REGIONS[current].feed);
+  $('feed').innerHTML=all.map(function(f){
+    var ic=f.kind==='sos'?'<svg viewBox="0 0 24 24" class="i" style="color:var(--info)"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16.1"/></svg>':
+      (f.kind==='flag'?'<svg viewBox="0 0 24 24" class="i" style="color:var(--danger)"><line x1="6" y1="4" x2="6" y2="20"/><path d="M6 5 h11 l-2 3 l2 3 h-11"/></svg>':
+      '<svg viewBox="0 0 24 24" class="i" style="color:var(--success)"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg>');
+    var tag=f.live?' <span class="badge info" style="padding:1px 6px;font-size:11px">live</span>':'';
+    var click=f.live?(' style="cursor:pointer" onclick="openIncident(\''+f.id+'\')"'):'';
+    return '<div class="row"'+click+'><span style="display:flex;align-items:center;gap:8px">'+ic+esc(f.t)+tag+'</span><span class="faint">'+esc(f.ago)+'</span></div>';
+  }).join('');
+}
+function renderTelematics(){
+  var t=REGIONS[current].telematics||{devices:0,harshBrake:0,speeding:0,cornering:0,night:0};
+  $('tel-devices').textContent=(t.devices||0).toLocaleString();
+  var items=[
+    {k:"harsh braking /100km",v:t.harshBrake,max:25},
+    {k:"speeding events /100km",v:t.speeding,max:25},
+    {k:"harsh cornering /100km",v:t.cornering,max:25},
+    {k:"night riding (% of trips)",v:t.night,max:60}
+  ];
+  $('telBars').innerHTML=items.map(function(it){
+    var pct=Math.round((it.v/it.max)*100);
+    return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px"><span style="width:180px;color:var(--muted)">'+esc(it.k)+'</span><span style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:8px;width:'+pct+'%;background:var(--info)"></span></span><span style="width:30px;text-align:right">'+it.v+'</span></div>';
+  }).join('');
+}
+function switchRegion(name){
+  current=name;
+  $('rg-accra').classList.toggle('on',name==='Accra');
+  $('rg-tamale').classList.toggle('on',name==='Tamale');
+  var R=REGIONS[name];
+  $('regionLabel').textContent=R.label;
+  $('regRegionLabel').textContent=R.label;
+  $('m-reg').textContent=R.reg.toLocaleString();
+  $('m-ins').textContent=R.insured+'%';
+  $('m-ver').textContent=R.verif.toLocaleString();
+  $('m-score').textContent=R.score;
+  $('map-Accra').style.display=(name==='Accra')?'block':'none';
+  $('map-Tamale').style.display=(name==='Tamale')?'block':'none';
+  LIVE_INCIDENTS=[];
+  renderFeed();
+  renderTelematics();
+  renderReg($('regSearch').value);
+  pollIncidents();
+}
+
+function recompute(){
+  $('loadCount').textContent=RIDERS.length.toLocaleString();
+  $('srcName').textContent=srcName;$('srcBadge').textContent=srcName==='sample'?'sample data':'imported data';
+  renderReg($('regSearch').value);
+}
+function badgeFor(st){var c=st==='active'?'ok':(st==='suspended'?'bad':'warn');return '<span class="badge '+c+'">'+esc(st)+'</span>';}
+function renderReg(filter){
+  var f=norm(filter);
+  var rows=RIDERS.filter(function(r){
+    if(r.region && r.region!==current) return false;
+    if(!f)return true;
+    return norm(r.full_name).indexOf(f)!==-1||norm(r.plate).indexOf(f)!==-1||norm(r.licence_no).indexOf(f)!==-1||norm(r.union).indexOf(f)!==-1||norm(r.district).indexOf(f)!==-1;
+  });
+  $('regBody').innerHTML=rows.map(function(r){return '<tr><td>'+esc(r.full_name)+'</td><td class="mono">'+esc(r.plate)+'</td><td class="mono">'+esc(r.licence_no||'—')+'</td><td>'+esc(r.union||'—')+'</td><td>'+esc(r.district)+'</td><td>'+esc(r.insurance_status)+'</td><td>'+esc(r.safety_score)+'</td><td>'+badgeFor(r.status)+'</td></tr>';}).join('')||'<tr><td colspan="8" class="muted" style="text-align:center;padding:14px">no matches in '+esc(REGIONS[current].label)+'</td></tr>';
+}
+
+function splitLine(line){var out=[],cur="",q=false;for(var i=0;i<line.length;i++){var c=line[i];if(c=='"'){if(q&&line[i+1]=='"'){cur+='"';i++;}else q=!q;}else if(c==','&&!q){out.push(cur);cur="";}else cur+=c;}out.push(cur);return out;}
+function parseCSV(t){var lines=t.replace(/\r/g,"").split("\n").filter(function(l){return l.trim().length;});if(!lines.length)return [];var hd=splitLine(lines[0]).map(function(h){return h.trim();});return lines.slice(1).map(function(line){var c=splitLine(line),o={};hd.forEach(function(h,i){o[h]=(c[i]||"").trim();});if(o.safety_score)o.safety_score=parseInt(o.safety_score,10)||0;return o;});}
+function importCSV(ev){var f=ev.target.files&&ev.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var rows=parseCSV(rd.result);if(!rows.length){alert("No rows found.");return;}RIDERS=rows;srcName=f.name;recompute();alert("Loaded "+rows.length+" riders from "+f.name);}catch(e){alert("Could not parse CSV: "+e.message);}};rd.readAsText(f);}
+function resetData(){RIDERS=SAMPLE.slice();srcName="sample";recompute();}
+
+document.getElementById('importInput').addEventListener('change',importCSV);
+document.getElementById('regSearch').addEventListener('input',function(){renderReg(this.value);});
+document.getElementById('incLogSearch').addEventListener('input',function(){renderIncidentLog(this.value);});
+document.getElementById('vq').addEventListener('keydown',function(e){if(e.key==='Enter')doVerify();});
+regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
+</script>
+</body>
+</html>

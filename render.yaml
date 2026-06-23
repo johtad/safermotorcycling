@@ -1,0 +1,30 @@
+# Render blueprint — deploys the SaferMotorcycling backend (which also serves the app).
+# In Render: New + → Blueprint → connect this repo. PORT is injected by Render automatically.
+# Secrets (sync:false) are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: safermotorcycling
+    runtime: node
+    rootDir: SaferMotorcycling-scaffold/backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: KORA_BASE
+        value: https://api.korapay.com/merchant/api/v1
+      - key: SMILE_ENV
+        value: sandbox
+      - key: KORA_SECRET_KEY
+        sync: false
+      - key: SMILE_PARTNER_ID
+        sync: false
+      - key: SMILE_API_KEY
+        sync: false
+      - key: MID_API_KEY
+        sync: false
+      - key: MID_BASE
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false

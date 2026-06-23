@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaferMotorcycling — verification scaffold</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div class="brand">
+      <span class="logo"><svg viewBox="0 0 24 24" class="i" style="width:21px;height:21px"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg></span>
+      <div><h1>SaferMotorcycling</h1><p>verification scaffold · NRSA</p></div>
+    </div>
+    <span class="tag">developer prototype</span>
+  </div>
+
+  <div class="bar">
+    <div class="stat"><b id="count">0</b> <span class="muted">riders loaded</span></div>
+    <div class="stat muted">source: <span id="dataSource">—</span></div>
+    <div class="spacer"></div>
+    <div><label class="k" for="modeSelect">mode</label>
+      <select id="modeSelect">
+        <option value="mock">mock</option>
+        <option value="dataset">dataset</option>
+        <option value="live">live (backend)</option>
+      </select>
+    </div>
+    <label class="btn file">import CSV<input type="file" id="importInput" accept=".csv,text/csv" /></label>
+    <button class="btn" id="resetBtn">reset to sample</button>
+  </div>
+
+  <div class="panel">
+    <h2>Verify a rider</h2>
+    <p class="muted small">Enter a Ghana Card number, plate, rider id, or name. Internal lookup runs against the loaded list; external checks (NIA / MID / DVLA) run per the selected mode.</p>
+    <div class="vrow">
+      <input type="text" id="verifyInput" placeholder="e.g. GHA-725300119-4  ·  NR 4821-19  ·  Yakubu" />
+      <button class="btn primary" id="verifyBtn"><svg viewBox="0 0 24 24" class="i"><circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg>Verify</button>
+    </div>
+    <div class="note" id="modeNote" style="display:none">Live mode calls your backend proxy at the configured URL. Government API keys must live on that server — never in this page. See README.md.</div>
+    <div id="verifyResult"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Registry</h2>
+    <div class="search">
+      <input type="text" id="search" placeholder="search name, plate, Ghana Card, district" />
+    </div>
+    <table>
+      <thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>insurance</th><th>score</th><th>status</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="foot">
+    Internal lookup uses NRSA's own collected data (import a CSV with the columns in <span class="mono">riders.sample.csv</span>). External validation against NIA / NIC-MID / DVLA requires API access via a backend proxy — see <span class="mono">README.md</span>. Handle real personal data under the Data Protection Act, 2012 (Act 843). Sample data is fictional.
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="verification.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

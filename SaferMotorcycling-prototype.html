@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaferMotorcycling — NRSA prototype</title>
+<style>
+:root{
+  --bg:#ffffff;--surface:#f6f5f1;--surface2:#eeede7;--text:#201f1c;--muted:#6c6b64;--faint:#9b998f;--border:#e4e2da;
+  --info:#185fa5;--info-bg:#e6f1fb;--success:#1d7a52;--success-bg:#e3f5ec;--danger:#b3261e;--danger-bg:#fbe9e7;--amber:#9a6b00;--amber-bg:#f9efd6;
+  --radius:10px;--radius-lg:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{max-width:1080px;margin:0 auto;padding:22px 20px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center}
+.brand h1{font-size:16px;font-weight:600;margin:0;line-height:1.15}
+.brand p{font-size:12px;color:var(--muted);margin:0}
+.seg{display:inline-flex;background:var(--surface2);border-radius:11px;padding:3px}
+.seg button{border:none;background:none;padding:8px 16px;border-radius:9px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.i{width:1em;height:1em;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+.view{display:none}.view.on{display:block}
+.stage{background:var(--surface2);border-radius:var(--radius-lg);padding:26px;display:flex;justify-content:center}
+.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:660px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.phbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.phbar .lg{display:flex;align-items:center;gap:9px}
+.phbar .lg svg{color:var(--info);width:22px;height:22px}
+.phbody{padding:17px;flex:1}
+.phnav{display:flex;border-top:1px solid var(--border)}
+.phnav button{flex:1;background:none;border:none;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);font-size:11px;cursor:pointer}
+.phnav button svg{width:19px;height:19px}
+.phnav button.on{color:var(--info)}
+.scr{display:none}.scr.on{display:block}.stp{display:none}.stp.on{display:block}
+.h{font-size:16px;font-weight:600;margin:2px 0 12px}
+.rolecard{width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px}
+.rolecard:hover{background:var(--surface)}
+.ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ic svg{width:18px;height:18px}
+.muted{color:var(--muted)}.faint{color:var(--faint)}.small{font-size:12px}
+label.lbl{display:block;font-size:13px;color:var(--muted);margin:13px 0 5px}
+input,select{height:38px;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;font:inherit;width:100%;background:var(--bg);color:var(--text)}
+input:focus,select:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px var(--info-bg)}
+.btn{height:42px;border:1px solid var(--border);background:var(--bg);border-radius:var(--radius);font:inherit;font-size:14px;cursor:pointer;width:100%;margin-top:11px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{background:var(--surface)}
+.btn.primary{background:var(--info);color:#fff;border-color:var(--info)}
+.btn.primary:hover{background:#13507f}
+.btn.ghost{height:auto;width:auto;border:none;background:none;color:var(--muted);padding:0;margin:0 0 10px;font-size:13px;display:inline-flex;gap:5px;align-items:center}
+.btn.ghost:hover{background:none;color:var(--text)}
+.dots{display:flex;gap:6px;margin:2px 0 16px}
+.dot{flex:1;height:4px;border-radius:2px;background:var(--border)}.dot.on{background:var(--info)}
+.badge{display:inline-flex;gap:5px;align-items:center;font-size:12px;padding:4px 10px;border-radius:8px}
+.badge.ok{background:var(--success-bg);color:var(--success)}.badge.bad{background:var(--danger-bg);color:var(--danger)}.badge.info{background:var(--info-bg);color:var(--info)}.badge.muted2{background:var(--surface2);color:var(--muted)}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;flex-shrink:0}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13px;border-top:1px solid var(--border)}
+.scan{border:1.5px dashed var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center}
+.scan svg{width:42px;height:42px;color:var(--faint)}
+.dash-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.kpi .lab{font-size:12px;color:var(--muted)}
+.kpi .num{font-size:25px;font-weight:600;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.panel h3{font-size:14px;font-weight:600;margin:0 0 4px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:50%}
+.bars{display:flex;align-items:flex-end;gap:9px;height:90px;margin-top:6px}
+.bars > div{flex:1;background:var(--info-bg);border-radius:4px 4px 0 0}
+.bars > div.last{background:var(--info)}
+.feed .row:first-child{border-top:none}
+table.reg{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+table.reg th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.reg td{padding:8px;border-bottom:1px solid var(--border)}
+.foot{text-align:center;color:var(--faint);font-size:12px;margin-top:24px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" class="i" style="width:21px;height:21px"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg></span>
+    <div><h1>SaferMotorcycling</h1><p>NRSA digital platform · interactive prototype</p></div>
+  </div>
+  <div class="seg">
+    <button id="seg-field" class="on" onclick="topView('field')">Field app</button>
+    <button id="seg-command" onclick="topView('command')">Command centre</button>
+  </div>
+</div>
+
+<div class="view on" id="v-field">
+<div class="stage">
+<div class="phone">
+<div class="phbar">
+  <div class="lg"><svg viewBox="0 0 24 24" class="i"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg>
+  <div><div style="font-size:14px;font-weight:600;line-height:1.15">SaferMotorcycling</div><div class="small muted" style="line-height:1.3">NRSA field app</div></div></div>
+  <span class="badge muted2" id="rolechip">home</span>
+</div>
+<div class="phbody">
+
+<div class="scr on" id="s-home">
+  <p class="h">What do you want to do?</p>
+  <button class="rolecard" onclick="go('register')"><span class="ic" style="background:var(--info-bg);color:var(--info)"><svg viewBox="0 0 24 24" class="i"><circle cx="9" cy="8" r="3.4"/><path d="M3.6 20 c0 -3.6 3 -5.6 5.4 -5.6 c1 0 2 .3 2.8 .8"/><line x1="17.5" y1="13.5" x2="17.5" y2="20"/><line x1="14.2" y1="16.7" x2="20.8" y2="16.7"/></svg></span><span style="flex:1"><b style="font-weight:600">Register a rider</b><br><span class="muted small">Digital warden · onboarding</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <button class="rolecard" onclick="go('verify')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg></span><span style="flex:1"><b style="font-weight:600">Verify a rider</b><br><span class="muted small">Passenger or police · scan tag</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <button class="rolecard" onclick="topView('command')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="6.5" width="3" height="11.5"/><rect x="16" y="13.5" width="3" height="4.5"/></svg></span><span style="flex:1"><b style="font-weight:600">Command centre</b><br><span class="muted small">NRSA oversight dashboard</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
+  <p class="small faint" style="margin-top:14px;line-height:1.6">Prototype scope: the MVP wedge — identity &amp; registration, then verification — plus the command-centre dashboard. Safety, incident and revenue layers come later.</p>
+</div>
+
+<div class="scr" id="s-register">
+  <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
+  <p class="h" style="margin-bottom:2px">Register rider</p>
+  <div class="dots"><span class="dot" id="rdot1"></span><span class="dot" id="rdot2"></span><span class="dot" id="rdot3"></span><span class="dot" id="rdot4"></span></div>
+
+  <div class="stp on" id="rstep1">
+    <p class="small muted" style="margin:0">Step 1 · identity (NIA)</p>
+    <label class="lbl">Ghana Card number</label>
+    <input type="text" value="GHA-725300119-4" />
+    <button class="btn primary" onclick="reveal('nia-res','nia-cont')"><svg viewBox="0 0 24 24" class="i"><path d="M12 5 c-4 0 -6 3 -6 6 v3"/><path d="M12 8 c-2.4 0 -3.4 2 -3.4 4 v3"/><path d="M12 11 v5"/><path d="M18 11 c0 -4 -3 -6 -6 -6"/></svg>Verify with NIA</button>
+    <div id="nia-res" style="display:none;margin-top:13px">
+      <div style="display:flex;align-items:center;gap:12px"><div class="avatar">KA</div><div><div style="font-weight:600">Kwabena Asante</div><div class="small muted">b. 1996-03-14 · age 30</div></div></div>
+      <span class="badge ok" style="margin-top:11px"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>verified against national identity register</span>
+    </div>
+    <button class="btn" id="nia-cont" style="display:none" onclick="regStep(2)">Continue</button>
+  </div>
+
+  <div class="stp" id="rstep2">
+    <p class="small muted" style="margin:0">Step 2 · the bike</p>
+    <label class="lbl">Plate / registration</label>
+    <input type="text" id="reg-plate" value="M-24-GR 4821" />
+    <label class="lbl">Vehicle type</label>
+    <select><option>Motorcycle (okada)</option><option>Tricycle (pragya)</option></select>
+    <label class="lbl">Engine / emissions class</label>
+    <select><option>Petrol — 2-stroke</option><option>Petrol — 4-stroke</option><option>Electric</option></select>
+    <button class="btn primary" onclick="regStep(3)">Continue</button>
+  </div>
+
+  <div class="stp" id="rstep3">
+    <p class="small muted" style="margin:0 0 8px">Step 3 · insurance (NIC / MID)</p>
+    <p class="small" style="margin:0">Third-party cover is mandatory under the 2025 Act. Check the Motor Insurance Database, or buy in-app.</p>
+    <button class="btn primary" onclick="reveal('mid-res','mid-cont')"><svg viewBox="0 0 24 24" class="i"><path d="M12 3 l7 3 v5 c0 4 -3 7 -7 8 c-4 -1 -7 -4 -7 -8 v-5 z"/><polyline points="9 12 11 14 15 10"/></svg>Check MID</button>
+    <div id="mid-res" style="display:none;margin-top:13px">
+      <span class="badge ok"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>policy valid · exp 12/2026 · via NIC MID</span>
+      <div class="small muted" style="margin-top:9px">No cover? <span style="color:var(--info)">Buy 30-day cover — GHS 18 via mobile money</span></div>
+    </div>
+    <button class="btn" id="mid-cont" style="display:none" onclick="regStep(4)">Continue</button>
+  </div>
+
+  <div class="stp" id="rstep4">
+    <p class="small muted" style="margin:0 0 8px">Step 4 · smart tag</p>
+    <p class="small" style="margin:0">Issue a tamper-evident tag and bind it to the rider + bike in the registry.</p>
+    <button class="btn primary" onclick="reveal('tag-res','tag-cont')"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg>Generate &amp; bind tag</button>
+    <div id="tag-res" style="display:none;margin-top:14px;text-align:center">
+      <svg viewBox="0 0 84 84" width="96" height="96" style="display:inline-block"><g fill="var(--text)">
+      <rect x="2" y="2" width="20" height="20"/><rect x="5" y="5" width="14" height="14" fill="var(--bg)"/><rect x="8" y="8" width="8" height="8"/>
+      <rect x="62" y="2" width="20" height="20"/><rect x="65" y="5" width="14" height="14" fill="var(--bg)"/><rect x="68" y="8" width="8" height="8"/>
+      <rect x="2" y="62" width="20" height="20"/><rect x="5" y="65" width="14" height="14" fill="var(--bg)"/><rect x="8" y="68" width="8" height="8"/>
+      <rect x="28" y="6" width="5" height="5"/><rect x="40" y="6" width="5" height="5"/><rect x="52" y="14" width="5" height="5"/><rect x="30" y="30" width="5" height="5"/><rect x="42" y="36" width="5" height="5"/><rect x="54" y="30" width="5" height="5"/><rect x="66" y="40" width="5" height="5"/><rect x="6" y="40" width="5" height="5"/><rect x="18" y="48" width="5" height="5"/><rect x="36" y="54" width="5" height="5"/><rect x="48" y="60" width="5" height="5"/><rect x="60" y="58" width="5" height="5"/><rect x="72" y="66" width="5" height="5"/><rect x="30" y="68" width="5" height="5"/></g></svg>
+      <div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;margin-top:4px">NRSA-TAG-0A1B2C</div>
+      <span class="badge ok" style="margin-top:9px"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>activated · bound to rider + bike</span>
+    </div>
+    <button class="btn primary" id="tag-cont" style="display:none" onclick="finishReg()"><svg viewBox="0 0 24 24" class="i"><circle cx="12" cy="12" r="9"/><polyline points="8 12 11 15 16 9"/></svg>Finish — add to registry</button>
+  </div>
+</div>
+
+<div class="scr" id="s-verify">
+  <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
+  <p class="h">Verify a rider</p>
+  <div class="scan"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg><p class="small muted" style="margin:8px 0 0">Point camera at the smart tag</p></div>
+  <button class="btn primary" onclick="scan()">Simulate scan</button>
+  <div id="vf-res" style="display:none;margin-top:14px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px"><div class="avatar">KA</div><div style="flex:1"><div style="font-weight:600">Kwabena Asante</div><div class="small muted">M-24-GR 4821 · okada</div></div><span class="badge ok"><svg viewBox="0 0 24 24" class="i"><path d="M12 3 l7 3 v5 c0 4 -3 7 -7 8 c-4 -1 -7 -4 -7 -8 v-5 z"/><polyline points="9 12 11 14 15 10"/></svg>verified</span></div>
+      <div class="row" style="margin-top:8px"><span class="muted">licence</span><span style="color:var(--success)">valid</span></div>
+      <div class="row"><span class="muted">insurance (MID)</span><span style="color:var(--success)">valid · exp 12/2026</span></div>
+      <div class="row"><span class="muted">safety score</span><span>86 / 100</span></div>
+      <div class="row"><span class="muted">flags</span><span>none</span></div>
+    </div>
+    <p class="small faint" style="margin:10px 2px 0;line-height:1.6">Works offline (signed tag). No smartphone? Dial <span style="font-family:ui-monospace,Menlo,monospace">*711*plate#</span> for an SMS check.</p>
+    <button class="btn ghost" style="margin-top:10px" onclick="toggleFlag()"><svg viewBox="0 0 24 24" class="i"><circle cx="12" cy="12" r="3"/><path d="M2 12 c3 -5 7 -7 10 -7 c3 0 7 2 10 7 c-3 5 -7 7 -10 7 c-3 0 -7 -2 -10 -7 z"/></svg>show a flagged example</button>
+  </div>
+  <div id="vf-flag" style="display:none;margin-top:14px">
+    <div class="card" style="border-color:#e7b3ae">
+      <div style="display:flex;align-items:center;gap:12px"><div class="avatar" style="background:var(--danger-bg);color:var(--danger)">YB</div><div style="flex:1"><div style="font-weight:600">Yaw Boateng</div><div class="small muted">M-19-AS 1107 · okada</div></div><span class="badge bad"><svg viewBox="0 0 24 24" class="i"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="16.6" x2="12" y2="16.7"/></svg>suspended</span></div>
+      <div class="row" style="margin-top:8px"><span class="muted">insurance (MID)</span><span style="color:var(--danger)">lapsed</span></div>
+      <div class="row"><span class="muted">demerit points</span><span style="color:var(--danger)">12 / 12 · suspended</span></div>
+    </div>
+    <button class="btn ghost" style="margin-top:10px" onclick="scan()"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>back to valid result</button>
+  </div>
+</div>
+
+</div>
+<div class="phnav">
+  <button id="t-home" class="on" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><path d="M4 11 l8 -6 l8 6"/><path d="M6 10 v9 h12 v-9"/></svg>home</button>
+  <button id="t-verify" onclick="go('verify')"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg>verify</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="view" id="v-command">
+  <div class="dash-head">
+    <div><h2 style="margin:0;font-size:18px">NRSA command centre</h2><p class="small muted" style="margin:2px 0 0">Pilot district · Tamale metro</p></div>
+    <span class="badge muted2">simulated data · prototype</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">registered riders</div><div class="num" id="m-reg">1,284</div></div>
+    <div class="kpi"><div class="lab">riders insured</div><div class="num">91%</div></div>
+    <div class="kpi"><div class="lab">verifications today</div><div class="num">342</div></div>
+    <div class="kpi"><div class="lab">crashes this month</div><div class="num">27</div></div>
+    <div class="kpi"><div class="lab">avg safety score</div><div class="num">81</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Crash &amp; violation hotspots</h3>
+      <p class="small muted" style="margin:0 0 4px">Last 90 days · hover a point for detail</p>
+      <svg viewBox="0 0 600 330" width="100%" style="display:block">
+        <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
+        <path d="M40 250 C160 210 220 260 320 220 C420 180 520 230 580 200" stroke="#bcd6ee" stroke-width="6" fill="none" opacity="0.7"/>
+        <g stroke="#d9d7cd" stroke-width="7" stroke-linecap="round">
+          <line x1="300" y1="165" x2="300" y2="30"/><line x1="300" y1="165" x2="300" y2="300"/>
+          <line x1="300" y1="165" x2="560" y2="165"/><line x1="300" y1="165" x2="60" y2="165"/>
+          <line x1="300" y1="165" x2="470" y2="70"/><line x1="300" y1="165" x2="470" y2="260"/>
+          <line x1="300" y1="165" x2="140" y2="70"/><line x1="300" y1="165" x2="140" y2="260"/>
+        </g>
+        <circle cx="300" cy="165" r="118" stroke="#cfcdC3" stroke-width="6" fill="none"/>
+        <circle cx="300" cy="165" r="8" fill="#9b998f"/>
+        <g>
+          <circle cx="384" cy="100" r="26" fill="#b3261e" opacity="0.20"/><circle cx="384" cy="100" r="6" fill="#b3261e"><title>Aboabo junction · 18 crashes / 90 days · high</title></circle>
+          <circle cx="418" cy="165" r="24" fill="#b3261e" opacity="0.20"/><circle cx="418" cy="165" r="6" fill="#b3261e"><title>Central market · 15 crashes / 90 days · high</title></circle>
+          <circle cx="300" cy="47" r="19" fill="#d99000" opacity="0.22"/><circle cx="300" cy="47" r="5" fill="#9a6b00"><title>Education ridge · 9 crashes / 90 days · watch</title></circle>
+          <circle cx="384" cy="232" r="19" fill="#d99000" opacity="0.22"/><circle cx="384" cy="232" r="5" fill="#9a6b00"><title>Lamashegu junction · 8 crashes / 90 days · watch</title></circle>
+          <circle cx="300" cy="285" r="17" fill="#d99000" opacity="0.22"/><circle cx="300" cy="285" r="5" fill="#9a6b00"><title>Kalpohin · 6 crashes / 90 days · watch</title></circle>
+          <circle cx="190" cy="165" r="16" fill="#d99000" opacity="0.22"/><circle cx="190" cy="165" r="5" fill="#9a6b00"><title>Sagnarigu road · 5 crashes / 90 days · watch</title></circle>
+        </g>
+        <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif">
+          <text x="392" y="96">Aboabo</text><text x="426" y="162">Central market</text><text x="262" y="40">Education ridge</text><text x="392" y="236">Lamashegu</text><text x="262" y="303">Kalpohin</text><text x="118" y="162">Sagnarigu</text>
+        </g>
+      </svg>
+      <div class="legend"><span><span class="sw" style="background:#b3261e"></span>high-risk junction</span><span><span class="sw" style="background:#9a6b00"></span>watch</span><span><span class="sw" style="background:#bcd6ee"></span>river</span></div>
+    </div>
+    <div class="panel">
+      <h3>Registrations per week</h3>
+      <div class="bars"><div style="height:34%"></div><div style="height:46%"></div><div style="height:41%"></div><div style="height:64%"></div><div style="height:79%"></div><div class="last" style="height:100%"></div></div>
+      <p class="small muted" style="margin:6px 0 0">Trending up as wardens onboard riders.</p>
+      <h3 style="margin-top:18px">Recent activity</h3>
+      <div class="feed" id="feed">
+        <div class="row"><span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" class="i" style="color:var(--success)"><path d="M5 12 l4 4 l6 -8"/><circle cx="12" cy="12" r="9"/></svg>new rider verified · M-24-GR 4821</span><span class="faint">now</span></div>
+        <div class="row"><span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" class="i" style="color:var(--info)"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16.1"/></svg>SOS resolved · Aboabo junction</span><span class="faint">12m</span></div>
+        <div class="row"><span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" class="i" style="color:var(--danger)"><line x1="6" y1="4" x2="6" y2="20"/><path d="M6 5 h11 l-2 3 l2 3 h-11"/></svg>tag flagged · insurance lapsed</span><span class="faint">1h</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>Registry sample</h3>
+    <table class="reg">
+      <thead><tr><th>rider</th><th>plate</th><th>insurance</th><th>score</th><th>status</th></tr></thead>
+      <tbody>
+        <tr><td>Kwabena Asante</td><td>M-24-GR 4821</td><td>valid</td><td>86</td><td><span class="badge ok">active</span></td></tr>
+        <tr><td>Abena Mensah</td><td>M-21-NR 0934</td><td>valid</td><td>92</td><td><span class="badge ok">active</span></td></tr>
+        <tr><td>Yaw Boateng</td><td>M-19-AS 1107</td><td>lapsed</td><td>41</td><td><span class="badge bad">suspended</span></td></tr>
+        <tr><td>Fuseini Iddrisu</td><td>M-23-NR 5560</td><td>valid</td><td>78</td><td><span class="badge ok">active</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="foot">SaferMotorcycling · NRSA · interactive prototype with simulated data · 2026</div>
+</div>
+
+<script>
+var registered=1284;
+function topView(name){['field','command'].forEach(function(v){document.getElementById('v-'+v).classList.toggle('on',v===name);document.getElementById('seg-'+v).classList.toggle('on',v===name);});window.scrollTo(0,0);}
+function go(name){['home','register','verify'].forEach(function(s){var e=document.getElementById('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=document.getElementById('t-'+s);if(b)b.classList.toggle('on',s===name);});document.getElementById('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();}
+function regStep(n){for(var i=1;i<=4;i++){var s=document.getElementById('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=document.getElementById('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
+function reveal(a,b){var e=document.getElementById(a);if(e)e.style.display='block';if(b){var c=document.getElementById(b);if(c)c.style.display='block';}}
+function resetReg(){regStep(1);['nia-res','nia-cont','mid-res','mid-cont','tag-res','tag-cont'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});}
+function finishReg(){registered++;document.getElementById('m-reg').textContent=registered.toLocaleString();var plate=(document.getElementById('reg-plate')||{}).value||'new bike';var feed=document.getElementById('feed');var d=document.createElement('div');d.className='row';d.innerHTML='<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" class="i" style="color:var(--success)"><path d="M5 12 l4 4 l6 -8"/><circle cx="12" cy="12" r="9"/></svg>new rider registered · '+plate+'</span><span class="faint">now</span>';feed.insertBefore(d,feed.firstChild);go('home');topView('command');}
+function scan(){reveal('vf-res');document.getElementById('vf-flag').style.display='none';}
+function toggleFlag(){document.getElementById('vf-flag').style.display='block';document.getElementById('vf-res').style.display='none';}
+regStep(1);
+</script>
+</body>
+</html>
