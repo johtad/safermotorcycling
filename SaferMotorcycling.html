@@ -80,6 +80,17 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
 .foot{text-align:center;color:var(--faint);font-size:12px;margin-top:24px}
 @media(max-width:720px){.grid2{grid-template-columns:1fr}}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+#map{height:380px;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface2)}
+.smc-ping{position:relative;display:block;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.smc-ping::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--c);opacity:.55;animation:smcpulse 1.8s ease-out infinite}
+@keyframes smcpulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(3.4);opacity:0}}
+.smc-ping.fast::after{animation-duration:1.05s;opacity:.7}
+.leaflet-container{font-family:inherit}
+.leaflet-popup-content{font-size:13px;line-height:1.5}
+</style>
 </head>
 <body>
 <div class="app">
@@ -200,7 +211,8 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
     <div class="panel">
       <h3>Crash &amp; violation hotspots</h3>
       <p class="small muted" style="margin:0 0 4px">Last 90 days · illustrative · hover a point</p>
-      <div id="map-Accra">
+      <div id="map"></div>
+      <div id="map-Accra" style="display:none">
       <svg viewBox="0 0 600 330" width="100%" style="display:block">
         <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
         <path d="M0 288 Q150 278 300 288 T600 286 L600 330 L0 330 Z" fill="#bcd6ee" opacity="0.55"/>
@@ -242,7 +254,7 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
         <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif"><text x="392" y="96">Aboabo</text><text x="426" y="162">Central market</text><text x="262" y="40">Education ridge</text><text x="392" y="236">Lamashegu</text><text x="262" y="303">Kalpohin</text><text x="118" y="162">Sagnarigu</text></g>
       </svg>
       </div>
-      <div class="legend"><span><span class="sw" style="background:#b3261e"></span>high-risk junction</span><span><span class="sw" style="background:#9a6b00"></span>watch</span><span><span class="sw" style="background:#bcd6ee"></span>water</span></div>
+      <div class="legend"><span><span class="sw" style="background:#e24b4a"></span>high-risk junction</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span><span class="sw" style="background:#e24b4a"></span>live SOS (pulsing)</span><span class="faint">satellite · switch to Streets, top-right</span></div>
     </div>
     <div class="panel">
       <h3>Registrations per week</h3>
@@ -307,12 +319,12 @@ var SAMPLE = RIDERS.slice();
 var srcName = "sample";
 
 var REGIONS = {
-  Accra: { label:"Greater Accra", reg:8420, insured:88, verif:1960, score:79, telematics:{devices:540,harshBrake:16,speeding:11,cornering:8,night:28}, feed:[
+  Accra: { label:"Greater Accra", reg:8420, insured:88, verif:1960, score:79, center:[5.59,-0.20], zoom:11, hotspots:[{lat:5.5705,lng:-0.1969,label:"Kwame Nkrumah Circle",sev:"high",count:24},{lat:5.558,lng:-0.234,label:"Kaneshie / Lapaz",sev:"high",count:21},{lat:5.667,lng:-0.017,label:"Tema station",sev:"high",count:17},{lat:5.668,lng:-0.166,label:"Madina",sev:"watch",count:11},{lat:5.618,lng:-0.165,label:"Tetteh Quarshie / Spintex",sev:"watch",count:10},{lat:5.618,lng:-0.227,label:"Achimota",sev:"watch",count:8},{lat:5.534,lng:-0.418,label:"Kasoa road",sev:"watch",count:7}], telematics:{devices:540,harshBrake:16,speeding:11,cornering:8,night:28}, feed:[
     {t:"SOS resolved · Kwame Nkrumah Circle", ago:"6m", kind:"sos"},
     {t:"tag flagged · insurance lapsed · Dansoman", ago:"40m", kind:"flag"},
     {t:"new rider verified · GT 2218-24", ago:"1h", kind:"ok"}
   ]},
-  Tamale: { label:"Tamale metro", reg:1284, insured:91, verif:342, score:81, telematics:{devices:210,harshBrake:11,speeding:7,cornering:5,night:19}, feed:[
+  Tamale: { label:"Tamale metro", reg:1284, insured:91, verif:342, score:81, center:[9.405,-0.845], zoom:12, hotspots:[{lat:9.398,lng:-0.836,label:"Aboabo junction",sev:"high",count:18},{lat:9.407,lng:-0.853,label:"Central market",sev:"high",count:15},{lat:9.43,lng:-0.85,label:"Education ridge",sev:"watch",count:9},{lat:9.38,lng:-0.85,label:"Lamashegu junction",sev:"watch",count:8},{lat:9.39,lng:-0.872,label:"Kalpohin",sev:"watch",count:6},{lat:9.412,lng:-0.86,label:"Sagnarigu road",sev:"watch",count:5}], telematics:{devices:210,harshBrake:11,speeding:7,cornering:5,night:19}, feed:[
     {t:"SOS resolved · Aboabo junction", ago:"12m", kind:"sos"},
     {t:"tag flagged · insurance lapsed", ago:"1h", kind:"flag"}
   ]}
@@ -327,7 +339,7 @@ function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){retu
 function norm(s){return (s||"").toString().trim().toLowerCase();}
 function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
-function topView(name){['field','command'].forEach(function(v){$('v-'+v).classList.toggle('on',v===name);$('seg-'+v).classList.toggle('on',v===name);});window.scrollTo(0,0);}
+function topView(name){['field','command'].forEach(function(v){$('v-'+v).classList.toggle('on',v===name);$('seg-'+v).classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}}
 function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
 function regStep(n){for(var i=1;i<=4;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
 function reveal(a,b){var e=$(a);if(e)e.style.display='block';if(b){var c=$(b);if(c)c.style.display='block';}}
@@ -370,7 +382,7 @@ function pollIncidents(){
     .then(function(d){
       ALL_INCIDENTS=(d&&d.incidents)||[];
       LIVE_INCIDENTS=ALL_INCIDENTS.filter(function(i){return i.region===current;});
-      setLiveDot(true);renderFeed();renderIncidentLog($('incLogSearch')?$('incLogSearch').value:'');loadRegistrations();
+      setLiveDot(true);renderFeed();renderMapIncidents();renderIncidentLog($('incLogSearch')?$('incLogSearch').value:'');loadRegistrations();
     })
     .catch(function(){setLiveDot(false);});
 }
@@ -469,6 +481,37 @@ function renderTelematics(){
     return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px"><span style="width:180px;color:var(--muted)">'+esc(it.k)+'</span><span style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:8px;width:'+pct+'%;background:var(--info)"></span></span><span style="width:30px;text-align:right">'+it.v+'</span></div>';
   }).join('');
 }
+var MAP=null,HOT=null,LIVEL=null,mapReady=false;
+function pulseIcon(color,size,fast){return L.divIcon({className:'',html:'<span class="smc-ping'+(fast?' fast':'')+'" style="--c:'+color+';width:'+size+'px;height:'+size+'px"></span>',iconSize:[size,size],iconAnchor:[size/2,size/2]});}
+function initMap(){
+  if(MAP||typeof L==='undefined')return;
+  MAP=L.map('map',{zoomControl:true});
+  var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'});
+  var labels=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+  var streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+  var satellite=L.layerGroup([sat,labels]).addTo(MAP);
+  L.control.layers({'Satellite':satellite,'Streets':streets},{},{position:'topright'}).addTo(MAP);
+  HOT=L.layerGroup().addTo(MAP);LIVEL=L.layerGroup().addTo(MAP);
+  MAP.setView([5.59,-0.20],11);mapReady=true;
+}
+function renderMap(){
+  if(!mapReady)return;var R=REGIONS[current];
+  if(R.center)MAP.setView(R.center,R.zoom||11);
+  HOT.clearLayers();
+  (R.hotspots||[]).forEach(function(h){
+    var color=h.sev==='high'?'#e24b4a':'#ef9f27',size=h.sev==='high'?16:12;
+    L.marker([h.lat,h.lng],{icon:pulseIcon(color,size,false)}).bindPopup('<b>'+esc(h.label)+'</b><br>'+h.count+' crashes / 90 days · '+esc(h.sev)).addTo(HOT);
+  });
+}
+function renderMapIncidents(){
+  if(!mapReady||!LIVEL)return;LIVEL.clearLayers();
+  LIVE_INCIDENTS.forEach(function(i){
+    var loc=i.location||{};if(loc.lat==null||loc.lng==null)return;
+    var resolved=i.status==='resolved',color=resolved?'#1d9e75':'#e24b4a';
+    L.marker([loc.lat,loc.lng],{icon:pulseIcon(color,15,!resolved)}).bindPopup('<b>'+esc((i.type||'sos').toUpperCase())+'</b> · '+esc(i.status||'')+'<br>'+esc((i.rider&&i.rider.plate)||'')+'<br>'+esc(loc.name||'')+'<br><a href="#" onclick="mapOpen(\''+i.id+'\');return false;">open details</a>').addTo(LIVEL);
+  });
+}
+function mapOpen(id){if(MAP)MAP.closePopup();openIncident(id);}
 function switchRegion(name){
   current=name;
   $('rg-accra').classList.toggle('on',name==='Accra');
@@ -480,10 +523,10 @@ function switchRegion(name){
   $('m-ins').textContent=R.insured+'%';
   $('m-ver').textContent=R.verif.toLocaleString();
   $('m-score').textContent=R.score;
-  $('map-Accra').style.display=(name==='Accra')?'block':'none';
-  $('map-Tamale').style.display=(name==='Tamale')?'block':'none';
+  renderMap();
   LIVE_INCIDENTS=[];
   renderFeed();
+  renderMapIncidents();
   renderTelematics();
   renderReg($('regSearch').value);
   pollIncidents();
@@ -514,7 +557,7 @@ document.getElementById('importInput').addEventListener('change',importCSV);
 document.getElementById('regSearch').addEventListener('input',function(){renderReg(this.value);});
 document.getElementById('incLogSearch').addEventListener('input',function(){renderIncidentLog(this.value);});
 document.getElementById('vq').addEventListener('keydown',function(e){if(e.key==='Enter')doVerify();});
-regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
+regStep(1);initMap();switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
 </script>
 </body>
 </html>
