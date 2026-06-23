@@ -82,6 +82,9 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
 #map{height:380px;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface2)}
 .smc-ping{position:relative;display:block;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
@@ -106,6 +109,11 @@ table.reg th,table.reg td{white-space:nowrap}
   .dash-head h2{font-size:16px}
   .topbar{margin-bottom:14px}
   .kpi .num{font-size:22px}
+}
+.smc-fs{font-size:18px;font-weight:700;text-align:center;line-height:28px;width:30px;height:30px;display:block;background:#fff;color:#333;text-decoration:none}
+@media(max-width:480px){
+  .stage{padding:0;background:transparent}
+  .phone{border:none;border-radius:0;box-shadow:none;min-height:auto}
 }
 </style>
 </head>
@@ -508,8 +516,21 @@ function initMap(){
   var streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   var satellite=L.layerGroup([sat,labels]).addTo(MAP);
   L.control.layers({'Satellite':satellite,'Streets':streets},{},{position:'topright'}).addTo(MAP);
-  HOT=L.layerGroup().addTo(MAP);LIVEL=L.layerGroup().addTo(MAP);
+  HOT=L.layerGroup().addTo(MAP);
+  LIVEL=(typeof L.markerClusterGroup==='function'?L.markerClusterGroup({maxClusterRadius:45,showCoverageOnHover:false}):L.layerGroup());
+  LIVEL.addTo(MAP);
+  addFullscreenControl();
+  document.addEventListener('fullscreenchange',function(){if(MAP)setTimeout(function(){MAP.invalidateSize();},200);});
+  document.addEventListener('webkitfullscreenchange',function(){if(MAP)setTimeout(function(){MAP.invalidateSize();},200);});
   MAP.setView([5.59,-0.20],11);mapReady=true;
+}
+function addFullscreenControl(){
+  var Ctl=L.Control.extend({options:{position:'topleft'},onAdd:function(){
+    var b=L.DomUtil.create('a','leaflet-bar smc-fs');b.href='#';b.title='Toggle fullscreen';b.innerHTML='⤢';
+    L.DomEvent.on(b,'click',function(e){L.DomEvent.stop(e);var el=document.getElementById('map');var rf=el.requestFullscreen||el.webkitRequestFullscreen;if(!document.fullscreenElement&&!document.webkitFullscreenElement){if(rf)rf.call(el);}else{var ef=document.exitFullscreen||document.webkitExitFullscreen;if(ef)ef.call(document);}});
+    return b;
+  }});
+  MAP.addControl(new Ctl());
 }
 function renderMap(){
   if(!mapReady)return;var R=REGIONS[current];
