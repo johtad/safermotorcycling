@@ -90,6 +90,23 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
 .smc-ping.fast::after{animation-duration:1.05s;opacity:.7}
 .leaflet-container{font-family:inherit}
 .leaflet-popup-content{font-size:13px;line-height:1.5}
+html,body{max-width:100%;overflow-x:hidden}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+table.reg{font-size:12px}
+table.reg th,table.reg td{white-space:nowrap}
+@media(max-width:720px){
+  .app{padding:14px 12px 34px}
+  .stage{padding:12px}
+  .phone{width:100%}
+  .kpis{grid-template-columns:1fr 1fr}
+  #map{height:300px}
+  .crow{grid-template-columns:16px 92px 1fr}
+  table.reg{font-size:11.5px}
+  table.reg th,table.reg td{padding:6px 7px}
+  .dash-head h2{font-size:16px}
+  .topbar{margin-bottom:14px}
+  .kpi .num{font-size:22px}
+}
 </style>
 </head>
 <body>
@@ -267,7 +284,7 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
   <div class="panel" style="margin-top:16px">
     <h3>Incident log <span class="small muted" style="font-weight:400">· all SOS &amp; dispatch records (newest first)</span></h3>
     <div class="vrow" style="margin:4px 0 8px"><input type="text" id="incLogSearch" placeholder="search rider, location, status, type, region" /></div>
-    <table class="reg"><thead><tr><th>time</th><th>type</th><th>rider</th><th>location</th><th>region</th><th>status</th><th>source</th></tr></thead><tbody id="incLogBody"></tbody></table>
+    <div class="tscroll"><table class="reg"><thead><tr><th>time</th><th>type</th><th>rider</th><th>location</th><th>region</th><th>status</th><th>source</th></tr></thead><tbody id="incLogBody"></tbody></table></div>
   </div>
   <div class="panel" style="margin-top:16px">
     <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400">(<span id="tel-devices">0</span> devices fitted)</span></h3>
@@ -277,7 +294,7 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
   <div class="panel" style="margin-top:16px">
     <h3>Registry — <span id="regRegionLabel">Greater Accra</span></h3>
     <div class="vrow" style="margin:4px 0 8px"><input type="text" id="regSearch" placeholder="search name, plate, licence, union, district" /></div>
-    <table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table>
+    <div class="tscroll"><table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table></div>
   </div>
 </div>
 
