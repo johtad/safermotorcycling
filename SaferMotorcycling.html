@@ -355,6 +355,7 @@ function simScan(){var r=RIDERS[0];$('vq').value=r.plate;renderVerify(r,r.plate)
 function finishReg(){
   var r={full_name:$('reg-name').value||"New rider",ghana_card:$('reg-card').value||"",licence_no:"",union:"GPRTU",plate:$('reg-plate').value||"",vehicle_type:$('reg-type').value||"Motorcycle",district:(current==='Accra'?'Accra Metro':'Tamale'),region:current,insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:80,status:"active"};
   RIDERS.unshift(r);
+  fetch(BACKEND+'/registrations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).catch(function(){});
   REGIONS[current].reg++;
   REGIONS[current].feed.unshift({t:"new rider registered · "+r.plate, ago:"now", kind:"ok"});
   switchRegion(current);
@@ -369,9 +370,18 @@ function pollIncidents(){
     .then(function(d){
       ALL_INCIDENTS=(d&&d.incidents)||[];
       LIVE_INCIDENTS=ALL_INCIDENTS.filter(function(i){return i.region===current;});
-      setLiveDot(true);renderFeed();renderIncidentLog($('incLogSearch')?$('incLogSearch').value:'');
+      setLiveDot(true);renderFeed();renderIncidentLog($('incLogSearch')?$('incLogSearch').value:'');loadRegistrations();
     })
     .catch(function(){setLiveDot(false);});
+}
+function loadRegistrations(){
+  fetch(BACKEND+'/registrations').then(function(r){return r.json();}).then(function(d){
+    var regs=(d&&d.registrations)||[];if(!regs.length)return;
+    var have={};RIDERS.forEach(function(x){have[(x.plate||'').toLowerCase()]=true;});
+    var added=false;
+    regs.forEach(function(x){var k=(x.plate||'').toLowerCase();if(k&&!have[k]){RIDERS.unshift(x);have[k]=true;added=true;}});
+    if(added)recompute();
+  }).catch(function(){});
 }
 function incBadge(s){var c=(s==='resolved')?'ok':((s==='open')?'warn':'info');return '<span class="badge '+c+'">'+esc(s||'')+'</span>';}
 function fmtShort(ts){try{var d=new Date(ts);return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(e){return ts;}}

@@ -12,6 +12,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const path = require("path");
+const store = require("./store");
 
 const app = express();
 app.use(cors());
@@ -45,20 +46,18 @@ function buildIncident(b) {
     ts: b.ts || now
   };
 }
-let INCIDENTS = [
-  buildIncident({
-    id: "inc-seed1", type: "sos", trigger: "auto", reported_by: "device",
-    rider: { plate: "GR 4471-24", name: "Kofi Mensah", licence_no: "481209", union: "Okada Riders Assoc.", insurance_status: "valid" },
-    location: { name: "Kwame Nkrumah Circle", lat: 5.5709, lng: -0.1971, digital_address: "GA-145-9302" },
-    region: "Accra", telematics: { speed_before_kmh: 54, impact_g: 7.2 }, source: "112", status: "resolved",
-    status_history: [
-      { status: "open", ts: "2026-06-23T16:00:00Z" },
-      { status: "acknowledged", ts: "2026-06-23T16:01:10Z" },
-      { status: "dispatched", ts: "2026-06-23T16:02:40Z" },
-      { status: "resolved", ts: "2026-06-23T16:14:05Z" }
-    ]
-  })
-];
+store.seedIncident(buildIncident({
+  id: "inc-seed1", type: "sos", trigger: "auto", reported_by: "device",
+  rider: { plate: "GR 4471-24", name: "Kofi Mensah", licence_no: "481209", union: "Okada Riders Assoc.", insurance_status: "valid" },
+  location: { name: "Kwame Nkrumah Circle", lat: 5.5709, lng: -0.1971, digital_address: "GA-145-9302" },
+  region: "Accra", telematics: { speed_before_kmh: 54, impact_g: 7.2 }, source: "112", status: "resolved",
+  status_history: [
+    { status: "open", ts: "2026-06-23T16:00:00Z" },
+    { status: "acknowledged", ts: "2026-06-23T16:01:10Z" },
+    { status: "dispatched", ts: "2026-06-23T16:02:40Z" },
+    { status: "resolved", ts: "2026-06-23T16:14:05Z" }
+  ]
+}));
 
 // ---------- adapters ----------
 
@@ -175,28 +174,36 @@ app.post("/verify/nia", handler(verifyNIA));
 app.post("/verify/mid", handler(verifyMID));
 app.post("/verify/dojah", handler(verifyDojah));
 // Incident pipeline — SOS now (app-sourced); 112/MTTD dispatch later (via MOU connector).
-app.post("/incidents", (req, res) => {
-  const inc = buildIncident(req.body || {});
-  INCIDENTS.unshift(inc);
-  res.json({ ok: true, incident: inc });
+app.post("/incidents", async (req, res) => {
+  try { const inc = buildIncident(req.body || {}); await store.addIncident(inc); res.json({ ok: true, incident: inc }); }
+  catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
-app.get("/incidents", (req, res) => {
-  const region = req.query.region;
-  const list = region ? INCIDENTS.filter((i) => i.region === region) : INCIDENTS;
-  res.json({ ok: true, incidents: list.slice(0, 500) });
+app.get("/incidents", async (req, res) => {
+  try { const list = await store.listIncidents(req.query.region); res.json({ ok: true, incidents: list }); }
+  catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
-app.get("/incidents/:id", (req, res) => {
-  const inc = INCIDENTS.find((i) => i.id === req.params.id);
-  if (!inc) return res.status(404).json({ ok: false, detail: "not found" });
-  res.json({ ok: true, incident: inc });
+app.get("/incidents/:id", async (req, res) => {
+  try { const inc = await store.getIncident(req.params.id); if (!inc) return res.status(404).json({ ok: false, detail: "not found" }); res.json({ ok: true, incident: inc }); }
+  catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
-app.patch("/incidents/:id", (req, res) => {
-  const inc = INCIDENTS.find((i) => i.id === req.params.id);
-  if (!inc) return res.status(404).json({ ok: false, detail: "not found" });
-  const status = (req.body && req.body.status) || inc.status;
-  inc.status = status;
-  inc.status_history.push({ status: status, ts: new Date().toISOString() });
-  res.json({ ok: true, incident: inc });
+app.patch("/incidents/:id", async (req, res) => {
+  try {
+    const status = req.body && req.body.status;
+    if (!status) return res.status(400).json({ ok: false, detail: "missing status" });
+    const inc = await store.updateIncidentStatus(req.params.id, status, { status: status, ts: new Date().toISOString() });
+    if (!inc) return res.status(404).json({ ok: false, detail: "not found" });
+    res.json({ ok: true, incident: inc });
+  } catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
+});
+
+// Registrations — riders onboarded in the field app, so NRSA sees what gets entered.
+app.post("/registrations", async (req, res) => {
+  try { const r = req.body || {}; await store.addRegistration(r); res.json({ ok: true, registration: r }); }
+  catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
+});
+app.get("/registrations", async (req, res) => {
+  try { const list = await store.listRegistrations(); res.json({ ok: true, registrations: list }); }
+  catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
 
 app.get("/", (_req, res) => res.json({ ok: true, service: "SaferMotorcycling verification proxy" }));
