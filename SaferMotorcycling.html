@@ -17,7 +17,8 @@ body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-sys
 .muted{color:var(--muted)}.faint{color:var(--faint)}.small{font-size:12px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:11px}
-.logo{width:38px;height:38px;border-radius:11px;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center}
+.logo{width:46px;height:46px;border-radius:10px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.logo img{width:100%;height:100%;object-fit:contain;display:block}
 .brand h1{font-size:16px;font-weight:600;margin:0;line-height:1.15}
 .brand p{font-size:12px;color:var(--muted);margin:0}
 .seg{display:inline-flex;background:var(--surface2);border-radius:11px;padding:3px}
@@ -30,6 +31,7 @@ body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-sys
 .phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:660px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
 .phbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
 .phbar .lg{display:flex;align-items:center;gap:9px}.phbar .lg svg{color:var(--info);width:22px;height:22px}
+.phbar .lg img{width:28px;height:28px;object-fit:contain;display:block;flex-shrink:0}
 .phbody{padding:17px;flex:1}
 .phnav{display:flex;border-top:1px solid var(--border)}
 .phnav button{flex:1;background:none;border:none;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);font-size:11px;cursor:pointer}
@@ -124,7 +126,7 @@ table.reg th,table.reg td{white-space:nowrap}
 
 <div class="topbar">
   <div class="brand">
-    <span class="logo"><svg viewBox="0 0 24 24" class="i" style="width:21px;height:21px"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg></span>
+    <span class="logo"><img src="nrsa-logo.png" alt="National Road Safety Authority — Ghana" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" /><span style="display:none;width:100%;height:100%;background:var(--info);color:#fff;align-items:center;justify-content:center;border-radius:10px"><svg viewBox="0 0 24 24" class="i" style="width:21px;height:21px"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg></span></span>
     <div><h1>SaferMotorcycling</h1><p>NRSA digital platform · prototype with real-data verification</p></div>
   </div>
   <div class="seg">
@@ -137,7 +139,7 @@ table.reg th,table.reg td{white-space:nowrap}
 <div class="stage">
 <div class="phone">
 <div class="phbar">
-  <div class="lg"><svg viewBox="0 0 24 24" class="i"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg>
+  <div class="lg"><img src="nrsa-logo.png" alt="NRSA" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'" /><svg viewBox="0 0 24 24" class="i" style="display:none"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg>
   <div><div style="font-size:14px;font-weight:600;line-height:1.15">SaferMotorcycling</div><div class="small muted" style="line-height:1.3">NRSA field app</div></div></div>
   <span class="badge muted2" id="rolechip">home</span>
 </div>
