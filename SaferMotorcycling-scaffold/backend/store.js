@@ -88,4 +88,28 @@ function seedIncident(inc) {
   if (!supa) memInc.unshift(inc); // only seed the in-memory store; real DB holds real data
 }
 
-module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, seedIncident, usingSupabase: () => !!supa };
+let memEvents = [];
+
+async function addEvent(e) {
+  const rec = { session_id: e.session_id || null, event_type: e.event_type || "unknown", event_data: e.event_data || {}, user_agent: e.user_agent || null };
+  if (supa) {
+    const { error } = await supa.from("usage_events").insert(rec);
+    if (error) throw error;
+    return rec;
+  }
+  memEvents.unshift({ ...rec, ts: new Date().toISOString() });
+  if (memEvents.length > 1000) memEvents.length = 1000;
+  return rec;
+}
+
+async function listEvents(limit) {
+  const n = Math.min(parseInt(limit, 10) || 100, 500);
+  if (supa) {
+    const { data, error } = await supa.from("usage_events").select("*").order("ts", { ascending: false }).limit(n);
+    if (error) throw error;
+    return data || [];
+  }
+  return memEvents.slice(0, n);
+}
+
+module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, seedIncident, usingSupabase: () => !!supa };

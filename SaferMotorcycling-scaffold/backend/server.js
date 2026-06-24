@@ -196,6 +196,21 @@ app.patch("/incidents/:id", async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
 
+// Usage events — anonymous visitor activity (page views, tab switches, key actions).
+// No PII captured: just a random session id, the event name, and minimal context.
+app.post("/events", async (req, res) => {
+  try {
+    const b = req.body || {};
+    const ua = (req.get && req.get("user-agent")) || "";
+    await store.addEvent({ session_id: b.session_id, event_type: b.event_type, event_data: b.event_data, user_agent: ua });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+app.get("/events", async (req, res) => {
+  try { const list = await store.listEvents(req.query.limit); res.json({ ok: true, events: list }); }
+  catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
 // Registrations — riders onboarded in the field app, so NRSA sees what gets entered.
 app.post("/registrations", async (req, res) => {
   try { const r = req.body || {}; await store.addRegistration(r); res.json({ ok: true, registration: r }); }

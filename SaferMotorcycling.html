@@ -244,7 +244,7 @@ table.reg th,table.reg td{white-space:nowrap}
   </div>
   <div class="panel">
     <div class="vrow" style="margin:0 0 8px"><input type="text" id="regSearch" placeholder="search name, plate, licence, union, district, region" /></div>
-    <div class="tscroll"><table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>region</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table></div>
+    <div class="tscroll"><table class="reg"><thead><tr><th>Rider</th><th>Plate</th><th>Driver's Licence</th><th>Union</th><th>District</th><th>Region</th><th>Insurance</th><th>Score</th><th>Status</th></tr></thead><tbody id="regBody"></tbody></table></div>
   </div>
 </div>
 
@@ -324,7 +324,7 @@ table.reg th,table.reg td{white-space:nowrap}
   <div class="panel" style="margin-top:16px">
     <h3>Incident log <span class="small muted" style="font-weight:400">· all SOS &amp; dispatch records (newest first)</span></h3>
     <div class="vrow" style="margin:4px 0 8px"><input type="text" id="incLogSearch" placeholder="search rider, location, status, type, region" /></div>
-    <div class="tscroll"><table class="reg"><thead><tr><th>time</th><th>type</th><th>rider</th><th>location</th><th>region</th><th>status</th><th>source</th></tr></thead><tbody id="incLogBody"></tbody></table></div>
+    <div class="tscroll"><table class="reg"><thead><tr><th>Time</th><th>Type</th><th>Rider</th><th>Location</th><th>Region</th><th>Status</th><th>Source</th></tr></thead><tbody id="incLogBody"></tbody></table></div>
   </div>
   <div class="panel" style="margin-top:16px">
     <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400">(<span id="tel-devices">0</span> devices fitted)</span></h3>
@@ -398,13 +398,16 @@ var current = "Accra";
 var BACKEND = (location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'http://localhost:8787';
 var LIVE_INCIDENTS = [];
 var ALL_INCIDENTS = [];
+var DEV=(location.search.indexOf('dev=1')!==-1);
+var SID=(function(){var k='smc_sid';var v=null;try{v=localStorage.getItem(k);}catch(e){}if(!v){v='s_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);try{localStorage.setItem(k,v);}catch(e){}}return v;})();
+function track(t,d){try{fetch(BACKEND+'/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:SID,event_type:t,event_data:d||{}}),keepalive:true}).catch(function(){});}catch(e){}}
 
 function $(id){return document.getElementById(id);}
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];});}
 function norm(s){return (s||"").toString().trim().toLowerCase();}
 function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
-function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}}
+function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}track('tab',{tab:name});}
 function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
 function regStep(n){for(var i=1;i<=5;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
 function confirmUnion(){var u=$('reg-union');if(u){$('union-name').textContent=u.value;}reveal('union-res','union-cont');}
@@ -427,8 +430,8 @@ function renderVerify(r,q){
   var rows=checks(r).map(crow).join("");
   box.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:12px"><div class="avatar">'+esc(ini)+'</div><div style="flex:1"><div style="font-weight:600">'+esc(r.full_name)+'</div><div class="small muted mono">'+esc(r.plate)+' · '+esc(r.vehicle_type)+' · '+esc(r.district)+'</div></div>'+badge+'</div>'+'<div class="row" style="margin-top:6px"><span class="muted">union</span><span>'+esc(r.union||"—")+'</span></div>'+'<div class="row"><span class="muted">safety score</span><span>'+esc(r.safety_score)+' / 100</span></div>'+'<div class="checks-label">external checks</div>'+rows+'</div>';
 }
-function doVerify(){var q=$('vq').value;if(!q.trim()){$('vres').innerHTML='';return;}renderVerify(findInRegistry(q),q);}
-function simScan(){var r=RIDERS[0];$('vq').value=r.plate;renderVerify(r,r.plate);}
+function doVerify(){var q=$('vq').value;if(!q.trim()){$('vres').innerHTML='';return;}track('verify',{found:!!findInRegistry(q)});renderVerify(findInRegistry(q),q);}
+function simScan(){var r=RIDERS[0];$('vq').value=r.plate;track('verify_scan');renderVerify(r,r.plate);}
 
 function finishReg(){
   var union=($('reg-union')&&$('reg-union').value)||"GPRTU";
@@ -436,6 +439,7 @@ function finishReg(){
   var r={full_name:$('reg-name').value||"New rider",ghana_card:$('reg-card').value||"",licence_no:"",union:union,station:station,plate:$('reg-plate').value||"",vehicle_type:$('reg-type').value||"Motorcycle",district:(current==='Accra'?'Accra Metro':'Tamale'),region:current,insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:80,status:"active"};
   RIDERS.unshift(r);
   fetch(BACKEND+'/registrations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).catch(function(){});
+  track('register_rider',{region:current,union:r.union,vehicle_type:r.vehicle_type});
   REGIONS[current].reg++;
   REGIONS[current].feed.unshift({t:"new rider registered · "+r.plate, ago:"now", kind:"ok"});
   switchRegion(current);
@@ -593,7 +597,7 @@ function renderMapIncidents(){
   });
 }
 function mapOpen(id){if(MAP)MAP.closePopup();openIncident(id);}
-function openMapModal(){$('mapModal').style.display='flex';$('mapTitle').textContent=REGIONS[current].label;if(!MAP)initMap();setTimeout(function(){if(MAP){MAP.invalidateSize();renderMap();renderMapIncidents();}},180);}
+function openMapModal(){track('map_open',{region:current});$('mapModal').style.display='flex';$('mapTitle').textContent=REGIONS[current].label;if(!MAP)initMap();setTimeout(function(){if(MAP){MAP.invalidateSize();renderMap();renderMapIncidents();}},180);}
 function closeMapModal(){$('mapModal').style.display='none';}
 function mapCenter(){if(MAP){var c=MAP.getCenter();return [c.lat,c.lng,Math.round(MAP.getZoom())];}var R=REGIONS[current];return [R.center[0],R.center[1],R.zoom||13];}
 function openGoogleMaps(){var c=mapCenter();window.open('https://www.google.com/maps/@'+c[0]+','+c[1]+','+c[2]+'z/data=!3m1!1e3','_blank','noopener');}
@@ -637,7 +641,7 @@ function renderReg(filter){
 
 function splitLine(line){var out=[],cur="",q=false;for(var i=0;i<line.length;i++){var c=line[i];if(c=='"'){if(q&&line[i+1]=='"'){cur+='"';i++;}else q=!q;}else if(c==','&&!q){out.push(cur);cur="";}else cur+=c;}out.push(cur);return out;}
 function parseCSV(t){var lines=t.replace(/\r/g,"").split("\n").filter(function(l){return l.trim().length;});if(!lines.length)return [];var hd=splitLine(lines[0]).map(function(h){return h.trim();});return lines.slice(1).map(function(line){var c=splitLine(line),o={};hd.forEach(function(h,i){o[h]=(c[i]||"").trim();});if(o.safety_score)o.safety_score=parseInt(o.safety_score,10)||0;return o;});}
-function importCSV(ev){var f=ev.target.files&&ev.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var rows=parseCSV(rd.result);if(!rows.length){alert("No rows found.");return;}RIDERS=rows;srcName=f.name;recompute();alert("Loaded "+rows.length+" riders from "+f.name);}catch(e){alert("Could not parse CSV: "+e.message);}};rd.readAsText(f);}
+function importCSV(ev){var f=ev.target.files&&ev.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var rows=parseCSV(rd.result);if(!rows.length){alert("No rows found.");return;}RIDERS=rows;srcName=f.name;recompute();track('import_csv',{rows:rows.length});alert("Loaded "+rows.length+" riders from "+f.name);}catch(e){alert("Could not parse CSV: "+e.message);}};rd.readAsText(f);}
 function resetData(){RIDERS=SAMPLE.slice();srcName="sample";recompute();}
 
 document.getElementById('importInput').addEventListener('change',importCSV);
@@ -645,6 +649,9 @@ document.getElementById('regSearch').addEventListener('input',function(){renderR
 document.getElementById('incLogSearch').addEventListener('input',function(){renderIncidentLog(this.value);});
 document.getElementById('vq').addEventListener('keydown',function(e){if(e.key==='Enter')doVerify();});
 regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
+track('page_view',{w:window.innerWidth,h:window.innerHeight,tz_min:new Date().getTimezoneOffset(),ref:document.referrer||'',dev:DEV});
+if(DEV){var d=document.createElement('div');d.id='devPanel';d.style.cssText='position:fixed;right:12px;bottom:12px;width:340px;max-height:50vh;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 18px rgba(0,0,0,.12);z-index:80;font-size:12px';d.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface)"><strong style="flex:1">Visitor activity</strong><span class="small muted">sid '+SID.slice(0,10)+'</span><button class="btn sm" style="height:26px;padding:0 8px;font-size:11px" onclick="loadEvents()">refresh</button></div><div id="devEvents" style="padding:8px 12px"></div>';document.body.appendChild(d);loadEvents();setInterval(loadEvents,15000);}
+function loadEvents(){if(!DEV)return;fetch(BACKEND+'/events?limit=80').then(function(r){return r.json();}).then(function(d){var rows=(d&&d.events)||[];var by={};rows.forEach(function(e){var k=(e.session_id||'?').slice(0,8);(by[k]=by[k]||[]).push(e);});var html='';Object.keys(by).slice(0,6).forEach(function(k){html+='<div style="margin-bottom:8px"><div style="font-weight:600;color:var(--info)">'+esc(k)+(k===SID.slice(0,8)?' <span class="badge info" style="padding:1px 6px;font-size:10px">you</span>':'')+' · '+by[k].length+' events</div>';by[k].slice(0,8).forEach(function(e){var t=e.event_type||'?';var when=fmtShort(e.ts);var dat=e.event_data?Object.keys(e.event_data).map(function(k){return k+'='+JSON.stringify(e.event_data[k])}).join(' '):'';html+='<div style="padding:2px 0;color:var(--muted)"><span class="mono">'+esc(when)+'</span> <strong style="color:var(--text)">'+esc(t)+'</strong> <span class="faint">'+esc(dat)+'</span></div>';});html+='</div>';});$('devEvents').innerHTML=html||'<div class="muted">no events yet</div>';}).catch(function(){$('devEvents').innerHTML='<div class="muted">offline</div>';});}
 </script>
 </body>
 </html>

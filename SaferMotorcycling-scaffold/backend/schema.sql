@@ -20,6 +20,17 @@ create table if not exists registrations (
 );
 create index if not exists registrations_ts_idx on registrations (ts desc);
 
+create table if not exists usage_events (
+  id          bigserial primary key,
+  session_id  text,
+  event_type  text,
+  event_data  jsonb,
+  user_agent  text,
+  ts          timestamptz default now()
+);
+create index if not exists usage_events_ts_idx on usage_events (ts desc);
+create index if not exists usage_events_session_idx on usage_events (session_id);
+
 -- The backend connects with the service-role key (server-side only), which bypasses
 -- row-level security. If you later expose these tables to the browser directly, enable
 -- RLS and add policies — but with this architecture the browser never touches Supabase.
