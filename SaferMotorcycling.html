@@ -139,6 +139,7 @@ table.reg th,table.reg td{white-space:nowrap}
   </div>
   <div class="seg">
     <button id="seg-field" class="on" onclick="topView('field')">Field app</button>
+    <button id="seg-registry" onclick="topView('registry')">Registry</button>
     <button id="seg-command" onclick="topView('command')">Command centre</button>
   </div>
 </div>
@@ -158,8 +159,7 @@ table.reg th,table.reg td{white-space:nowrap}
   <button class="rolecard" onclick="go('register')"><span class="ic" style="background:var(--info-bg);color:var(--info)"><svg viewBox="0 0 24 24" class="i"><circle cx="9" cy="8" r="3.4"/><path d="M3.6 20 c0 -3.6 3 -5.6 5.4 -5.6 c1 0 2 .3 2.8 .8"/><line x1="17.5" y1="13.5" x2="17.5" y2="20"/><line x1="14.2" y1="16.7" x2="20.8" y2="16.7"/></svg></span><span style="flex:1"><b style="font-weight:600">Register a rider</b><br><span class="muted small">Digital warden · onboarding</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
   <button class="rolecard" onclick="go('verify')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg></span><span style="flex:1"><b style="font-weight:600">Verify a rider</b><br><span class="muted small">Passenger or police · look up</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
   <button class="rolecard" onclick="topView('command')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="6.5" width="3" height="11.5"/><rect x="16" y="13.5" width="3" height="4.5"/></svg></span><span style="flex:1"><b style="font-weight:600">Command centre</b><br><span class="muted small">NRSA oversight dashboard</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
-  <p class="small faint" style="margin-top:14px;line-height:1.6">Verification runs against the loaded rider list. Import NRSA's real data in the command centre.</p>
-  <button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="sendSOS()"><svg viewBox="0 0 24 24" class="i"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="16.6" x2="12" y2="16.7"/></svg>Send emergency SOS</button>
+  <p class="small faint" style="margin-top:14px;line-height:1.6">Verification runs against the loaded rider list. Import NRSA's real data in the Registry tab.</p>
 </div>
 
 <div class="scr" id="s-register">
@@ -219,10 +219,27 @@ table.reg th,table.reg td{white-space:nowrap}
 </div>
 </div>
 
+<div class="view" id="v-registry">
+  <div class="dash-head">
+    <div><h2 style="margin:0;font-size:18px">Rider registry</h2><p class="small muted" style="margin:2px 0 0">All onboarded riders across regions</p></div>
+    <span class="badge muted2" id="srcBadge">sample data</span>
+  </div>
+  <div class="databar">
+    <span><b id="loadCount">0</b> riders loaded</span>
+    <span class="muted">source: <span id="srcName">sample</span></span>
+    <span class="spacer"></span>
+    <label class="btn file sm">import NRSA CSV<input type="file" id="importInput" accept=".csv,text/csv" /></label>
+    <button class="btn sm" onclick="resetData()">reset to sample</button>
+  </div>
+  <div class="panel">
+    <div class="vrow" style="margin:0 0 8px"><input type="text" id="regSearch" placeholder="search name, plate, licence, union, district, region" /></div>
+    <div class="tscroll"><table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>region</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table></div>
+  </div>
+</div>
+
 <div class="view" id="v-command">
   <div class="dash-head">
     <div><h2 style="margin:0;font-size:18px">NRSA command centre</h2><p class="small muted" style="margin:2px 0 0">Live oversight · <span id="regionLabel">Greater Accra</span></p></div>
-    <span class="badge muted2" id="srcBadge">sample data</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
     <div class="seg">
@@ -230,13 +247,6 @@ table.reg th,table.reg td{white-space:nowrap}
       <button id="rg-tamale" onclick="switchRegion('Tamale')">Tamale metro</button>
     </div>
     <span class="small faint">+ 14 more regions ready to switch on</span>
-  </div>
-  <div class="databar">
-    <span><b id="loadCount">0</b> riders in loaded registry</span>
-    <span class="muted">source: <span id="srcName">sample</span></span>
-    <span class="spacer"></span>
-    <label class="btn file sm">import NRSA CSV<input type="file" id="importInput" accept=".csv,text/csv" /></label>
-    <button class="btn sm" onclick="resetData()">reset to sample</button>
   </div>
   <div class="kpis">
     <div class="kpi"><div class="lab">registered riders</div><div class="num" id="m-reg">0</div></div>
@@ -309,11 +319,6 @@ table.reg th,table.reg td{white-space:nowrap}
     <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400">(<span id="tel-devices">0</span> devices fitted)</span></h3>
     <p class="small muted" style="margin:0 0 10px">From on-bike GPS + motion trackers · these events feed each rider's 0–100 safety score</p>
     <div id="telBars"></div>
-  </div>
-  <div class="panel" style="margin-top:16px">
-    <h3>Registry — <span id="regRegionLabel">Greater Accra</span></h3>
-    <div class="vrow" style="margin:4px 0 8px"><input type="text" id="regSearch" placeholder="search name, plate, licence, union, district" /></div>
-    <div class="tscroll"><table class="reg"><thead><tr><th>rider</th><th>plate</th><th>driver's licence</th><th>union</th><th>district</th><th>insurance</th><th>score</th><th>status</th></tr></thead><tbody id="regBody"></tbody></table></div>
   </div>
 </div>
 
@@ -388,7 +393,7 @@ function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){retu
 function norm(s){return (s||"").toString().trim().toLowerCase();}
 function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
-function topView(name){['field','command'].forEach(function(v){$('v-'+v).classList.toggle('on',v===name);$('seg-'+v).classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}}
+function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}}
 function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
 function regStep(n){for(var i=1;i<=4;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
 function reveal(a,b){var e=$(a);if(e)e.style.display='block';if(b){var c=$(b);if(c)c.style.display='block';}}
@@ -585,7 +590,6 @@ function switchRegion(name){
   $('rg-tamale').classList.toggle('on',name==='Tamale');
   var R=REGIONS[name];
   $('regionLabel').textContent=R.label;
-  $('regRegionLabel').textContent=R.label;
   $('m-reg').textContent=R.reg.toLocaleString();
   $('m-ins').textContent=R.insured+'%';
   $('m-ver').textContent=R.verif.toLocaleString();
@@ -602,19 +606,19 @@ function switchRegion(name){
 }
 
 function recompute(){
-  $('loadCount').textContent=RIDERS.length.toLocaleString();
-  $('srcName').textContent=srcName;$('srcBadge').textContent=srcName==='sample'?'sample data':'imported data';
+  var lc=$('loadCount');if(lc)lc.textContent=RIDERS.length.toLocaleString();
+  var sn=$('srcName');if(sn)sn.textContent=srcName;
+  var sb=$('srcBadge');if(sb)sb.textContent=srcName==='sample'?'sample data':'imported data';
   renderReg($('regSearch').value);
 }
 function badgeFor(st){var c=st==='active'?'ok':(st==='suspended'?'bad':'warn');return '<span class="badge '+c+'">'+esc(st)+'</span>';}
 function renderReg(filter){
   var f=norm(filter);
   var rows=RIDERS.filter(function(r){
-    if(r.region && r.region!==current) return false;
     if(!f)return true;
-    return norm(r.full_name).indexOf(f)!==-1||norm(r.plate).indexOf(f)!==-1||norm(r.licence_no).indexOf(f)!==-1||norm(r.union).indexOf(f)!==-1||norm(r.district).indexOf(f)!==-1;
+    return norm(r.full_name).indexOf(f)!==-1||norm(r.plate).indexOf(f)!==-1||norm(r.licence_no).indexOf(f)!==-1||norm(r.union).indexOf(f)!==-1||norm(r.district).indexOf(f)!==-1||norm(r.region).indexOf(f)!==-1;
   });
-  $('regBody').innerHTML=rows.map(function(r){return '<tr><td>'+esc(r.full_name)+'</td><td class="mono">'+esc(r.plate)+'</td><td class="mono">'+esc(r.licence_no||'—')+'</td><td>'+esc(r.union||'—')+'</td><td>'+esc(r.district)+'</td><td>'+esc(r.insurance_status)+'</td><td>'+esc(r.safety_score)+'</td><td>'+badgeFor(r.status)+'</td></tr>';}).join('')||'<tr><td colspan="8" class="muted" style="text-align:center;padding:14px">no matches in '+esc(REGIONS[current].label)+'</td></tr>';
+  $('regBody').innerHTML=rows.map(function(r){return '<tr><td>'+esc(r.full_name)+'</td><td class="mono">'+esc(r.plate)+'</td><td class="mono">'+esc(r.licence_no||'—')+'</td><td>'+esc(r.union||'—')+'</td><td>'+esc(r.district)+'</td><td>'+esc(r.region||'—')+'</td><td>'+esc(r.insurance_status)+'</td><td>'+esc(r.safety_score)+'</td><td>'+badgeFor(r.status)+'</td></tr>';}).join('')||'<tr><td colspan="9" class="muted" style="text-align:center;padding:14px">no matches</td></tr>';
 }
 
 function splitLine(line){var out=[],cur="",q=false;for(var i=0;i<line.length;i++){var c=line[i];if(c=='"'){if(q&&line[i+1]=='"'){cur+='"';i++;}else q=!q;}else if(c==','&&!q){out.push(cur);cur="";}else cur+=c;}out.push(cur);return out;}
