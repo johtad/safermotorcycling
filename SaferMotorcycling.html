@@ -323,7 +323,7 @@ table.reg th,table.reg td{white-space:nowrap}
       <button class="btn sm" onclick="closeMapModal()">Close</button>
     </div>
     <div id="map"></div>
-    <div class="legend" style="padding:8px 14px;margin:0"><span><span class="sw" style="background:#e24b4a"></span>high-risk</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span><span class="sw" style="background:#e24b4a"></span>live SOS</span><span class="faint">satellite · Streets toggle top-right</span></div>
+    <div class="legend" style="padding:8px 14px;margin:0"><span><span class="sw" style="background:#e24b4a"></span>high-risk</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span><span class="sw" style="background:#e24b4a"></span>live SOS</span><span class="faint">streets · Satellite toggle top-right</span></div>
   </div>
 </div>
 
@@ -527,9 +527,9 @@ function initMap(){
   MAP=L.map('map',{zoomControl:true});
   var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'});
   var labels=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
-  var streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
-  var satellite=L.layerGroup([sat,labels]).addTo(MAP);
-  L.control.layers({'Satellite':satellite,'Streets':streets},{},{position:'topright'}).addTo(MAP);
+  var streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAP);
+  var satellite=L.layerGroup([sat,labels]);
+  L.control.layers({'Streets':streets,'Satellite':satellite},{},{position:'topright'}).addTo(MAP);
   HOT=L.layerGroup().addTo(MAP);
   LIVEL=(typeof L.markerClusterGroup==='function'?L.markerClusterGroup({maxClusterRadius:45,showCoverageOnHover:false}):L.layerGroup());
   LIVEL.addTo(MAP);
