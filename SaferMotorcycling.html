@@ -165,7 +165,7 @@ table.reg th,table.reg td{white-space:nowrap}
 <div class="scr" id="s-register">
   <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
   <p class="h" style="margin-bottom:2px">Register rider</p>
-  <div class="dots"><span class="dot" id="rdot1"></span><span class="dot" id="rdot2"></span><span class="dot" id="rdot3"></span><span class="dot" id="rdot4"></span></div>
+  <div class="dots"><span class="dot" id="rdot1"></span><span class="dot" id="rdot2"></span><span class="dot" id="rdot3"></span><span class="dot" id="rdot4"></span><span class="dot" id="rdot5"></span></div>
   <div class="stp on" id="rstep1">
     <p class="small muted" style="margin:0">Step 1 · identity (NIA)</p>
     <label class="lbl">Ghana Card number</label><input type="text" id="reg-card" value="GHA-725300119-4" />
@@ -182,14 +182,25 @@ table.reg th,table.reg td{white-space:nowrap}
     <button class="btn primary" onclick="regStep(3)">Continue</button>
   </div>
   <div class="stp" id="rstep3">
-    <p class="small muted" style="margin:0 0 8px">Step 3 · insurance (NIC / MID)</p>
+    <p class="small muted" style="margin:0">Step 3 · union membership</p>
+    <p class="small" style="margin:5px 0 0">Required under the 2025 Act — rider must belong to a licensed commercial road transport organisation.</p>
+    <label class="lbl">Union</label>
+    <select id="reg-union"><option>GPRTU</option><option>Okada Riders Assoc.</option><option>Tricycle Operators Union</option><option>Co-operative Transport Society</option></select>
+    <label class="lbl">Station / branch</label>
+    <input type="text" id="reg-station" placeholder="e.g. Circle station" value="Circle station" />
+    <button class="btn primary" onclick="confirmUnion()"><svg viewBox="0 0 24 24" class="i"><circle cx="9" cy="8" r="3"/><path d="M3 21 c0 -4 3 -6 6 -6 s6 2 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M14 21 c0 -3 2 -5 5 -5"/></svg>Confirm membership</button>
+    <div id="union-res" style="display:none;margin-top:13px"><span class="badge ok"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>membership confirmed with <span id="union-name">GPRTU</span></span></div>
+    <button class="btn" id="union-cont" style="display:none" onclick="regStep(4)">Continue</button>
+  </div>
+  <div class="stp" id="rstep4">
+    <p class="small muted" style="margin:0 0 8px">Step 4 · insurance (NIC / MID)</p>
     <p class="small" style="margin:0">Third-party cover is mandatory under the 2025 Act.</p>
     <button class="btn primary" onclick="reveal('mid-res','mid-cont')"><svg viewBox="0 0 24 24" class="i"><path d="M12 3 l7 3 v5 c0 4 -3 7 -7 8 c-4 -1 -7 -4 -7 -8 v-5 z"/><polyline points="9 12 11 14 15 10"/></svg>Check MID</button>
     <div id="mid-res" style="display:none;margin-top:13px"><span class="badge ok"><svg viewBox="0 0 24 24" class="i"><polyline points="5 12 10 17 19 7"/></svg>policy valid · exp 12/2026 · via NIC MID</span></div>
-    <button class="btn" id="mid-cont" style="display:none" onclick="regStep(4)">Continue</button>
+    <button class="btn" id="mid-cont" style="display:none" onclick="regStep(5)">Continue</button>
   </div>
-  <div class="stp" id="rstep4">
-    <p class="small muted" style="margin:0 0 8px">Step 4 · smart tag</p>
+  <div class="stp" id="rstep5">
+    <p class="small muted" style="margin:0 0 8px">Step 5 · smart tag</p>
     <p class="small" style="margin:0">Issue a tamper-evident tag and bind it to the rider + bike.</p>
     <button class="btn primary" onclick="reveal('tag-res','tag-cont')"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg>Generate &amp; bind tag</button>
     <div id="tag-res" style="display:none;margin-top:14px;text-align:center">
@@ -395,9 +406,10 @@ function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
 function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}}
 function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
-function regStep(n){for(var i=1;i<=4;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
+function regStep(n){for(var i=1;i<=5;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
+function confirmUnion(){var u=$('reg-union');if(u){$('union-name').textContent=u.value;}reveal('union-res','union-cont');}
 function reveal(a,b){var e=$(a);if(e)e.style.display='block';if(b){var c=$(b);if(c)c.style.display='block';}}
-function resetReg(){regStep(1);['nia-res','nia-cont','mid-res','mid-cont','tag-res','tag-cont'].forEach(function(id){var e=$(id);if(e)e.style.display='none';});}
+function resetReg(){regStep(1);['nia-res','nia-cont','union-res','union-cont','mid-res','mid-cont','tag-res','tag-cont'].forEach(function(id){var e=$(id);if(e)e.style.display='none';});}
 
 function findInRegistry(q){var s=norm(q);if(!s)return null;var sn=noSpace(q);return RIDERS.find(function(r){return norm(r.ghana_card)===s||noSpace(r.plate)===sn||norm(r.licence_no)===s||norm(r.full_name).indexOf(s)!==-1;})||null;}
 function checks(r){return [
@@ -419,7 +431,9 @@ function doVerify(){var q=$('vq').value;if(!q.trim()){$('vres').innerHTML='';ret
 function simScan(){var r=RIDERS[0];$('vq').value=r.plate;renderVerify(r,r.plate);}
 
 function finishReg(){
-  var r={full_name:$('reg-name').value||"New rider",ghana_card:$('reg-card').value||"",licence_no:"",union:"GPRTU",plate:$('reg-plate').value||"",vehicle_type:$('reg-type').value||"Motorcycle",district:(current==='Accra'?'Accra Metro':'Tamale'),region:current,insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:80,status:"active"};
+  var union=($('reg-union')&&$('reg-union').value)||"GPRTU";
+  var station=($('reg-station')&&$('reg-station').value)||"";
+  var r={full_name:$('reg-name').value||"New rider",ghana_card:$('reg-card').value||"",licence_no:"",union:union,station:station,plate:$('reg-plate').value||"",vehicle_type:$('reg-type').value||"Motorcycle",district:(current==='Accra'?'Accra Metro':'Tamale'),region:current,insurance_status:"valid",insurance_expiry:"2026-12",license_status:"valid",safety_score:80,status:"active"};
   RIDERS.unshift(r);
   fetch(BACKEND+'/registrations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).catch(function(){});
   REGIONS[current].reg++;
