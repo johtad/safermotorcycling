@@ -30,7 +30,7 @@ body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-sys
 .i.ok{color:var(--success)}.i.bad{color:var(--danger)}
 .view{display:none}.view.on{display:block}
 .stage{background:var(--surface2);border-radius:var(--radius-lg);padding:26px;display:flex;justify-content:center}
-.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:780px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:540px;max-height:760px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
 .phbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
 .phbar .lg{display:flex;align-items:center;gap:9px}.phbar .lg svg{color:var(--info);width:22px;height:22px}
 .phbar .lg img{width:28px;height:28px;object-fit:contain;display:block;flex-shrink:0}
@@ -127,7 +127,7 @@ table.reg th,table.reg td{white-space:nowrap}
 @media(prefers-reduced-motion:reduce){#map-Accra svg circle,#map-Tamale svg circle{animation:none!important}}
 @media(max-width:480px){
   .stage{padding:0;background:transparent}
-  .phone{border:none;border-radius:0;box-shadow:none;min-height:auto}
+  .phone{border:none;border-radius:0;box-shadow:none;height:auto;min-height:auto;max-height:none}
 }
 </style>
 </head>
