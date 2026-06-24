@@ -1,7 +1,7 @@
-rider_id,full_name,ghana_card,licence_no,union,phone,plate,vehicle_type,district,insurance_status,insurance_expiry,license_status,safety_score,status
-NR-0001,Abdul-Rahman Mohammed,GHA-418200731-6,142398,GPRTU,024 555 0101,NR 2841-24,Motorcycle,Tamale,valid,2026-12,valid,86,active
-NR-0002,Fuseini Iddrisu,GHA-733910228-1,305712,Okada Riders Assoc.,020 555 0102,NR 5560-23,Motorcycle,Sagnarigu,valid,2026-08,valid,78,active
-NR-0003,Mariama Alhassan,GHA-205663419-4,588104,Tricycle Operators Union,055 555 0103,NR 1107-22,Tricycle,Tamale,lapsed,2025-11,valid,64,pending
-NR-0004,Yakubu Sulemana,GHA-661280537-9,070667,GPRTU,024 555 0104,NR 0934-24,Motorcycle,Tamale,valid,2027-01,valid,92,active
-NR-0005,Yaw Boateng,GHA-509172648-3,219476,Okada Riders Assoc.,026 555 0105,NR 4821-19,Motorcycle,Sagnarigu,lapsed,2025-06,expired,41,suspended
-NR-0006,Adisa Abukari,GHA-374905162-7,663201,GPRTU,020 555 0106,NR 3312-24,Motorcycle,Tamale,valid,2026-09,valid,80,active
+rider_id,full_name,ghana_card,licence_no,union,phone_primary,phone_secondary,plate,vehicle_type,district,insurance_status,insurance_expiry,license_status,safety_score,status
+NR-0001,Abdul-Rahman Mohammed,GHA-418200731-6,142398,GPRTU,024 555 0101,020 555 0910,NR 2841-24,Motorcycle,Tamale,valid,2026-12,valid,86,active
+NR-0002,Fuseini Iddrisu,GHA-733910228-1,305712,Okada Riders Assoc.,020 555 0102,,NR 5560-23,Motorcycle,Sagnarigu,valid,2026-08,valid,78,active
+NR-0003,Mariama Alhassan,GHA-205663419-4,588104,Tricycle Operators Union,055 555 0103,,NR 1107-22,Tricycle,Tamale,lapsed,2025-11,valid,64,pending
+NR-0004,Yakubu Sulemana,GHA-661280537-9,070667,GPRTU,024 555 0104,020 555 0913,NR 0934-24,Motorcycle,Tamale,valid,2027-01,valid,92,active
+NR-0005,Yaw Boateng,GHA-509172648-3,219476,Okada Riders Assoc.,026 555 0105,,NR 4821-19,Motorcycle,Sagnarigu,lapsed,2025-06,expired,41,suspended
+NR-0006,Adisa Abukari,GHA-374905162-7,663201,GPRTU,020 555 0106,,NR 3312-24,Motorcycle,Tamale,valid,2026-09,valid,80,active
