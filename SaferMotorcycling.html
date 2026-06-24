@@ -23,19 +23,21 @@ body{margin:0;background:var(--surface);color:var(--text);font-family:-apple-sys
 .brand p{font-size:12px;color:var(--muted);margin:0}
 .seg{display:inline-flex;background:var(--surface2);border-radius:11px;padding:3px}
 .seg button{border:none;background:none;padding:8px 16px;border-radius:9px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer}
+.topbar .seg{padding:4px}
+.topbar .seg button{padding:11px 22px;font-size:14px;border-radius:8px}
 .seg button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .i{width:1em;height:1em;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
 .i.ok{color:var(--success)}.i.bad{color:var(--danger)}
 .view{display:none}.view.on{display:block}
 .stage{background:var(--surface2);border-radius:var(--radius-lg);padding:26px;display:flex;justify-content:center}
-.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:720px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+.phone{width:392px;max-width:100%;background:var(--bg);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;min-height:780px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
 .phbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
 .phbar .lg{display:flex;align-items:center;gap:9px}.phbar .lg svg{color:var(--info);width:22px;height:22px}
 .phbar .lg img{width:28px;height:28px;object-fit:contain;display:block;flex-shrink:0}
 .phbody{padding:17px;flex:1}
 .phnav{display:flex;border-top:1px solid var(--border)}
-.phnav button{flex:1;background:none;border:none;padding:14px 0 16px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--faint);font-size:11px;cursor:pointer}
-.phnav button svg{width:19px;height:19px}.phnav button.on{color:var(--info)}
+.phnav button{flex:1;background:none;border:none;padding:18px 0 22px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--faint);font-size:12px;cursor:pointer}
+.phnav button svg{width:22px;height:22px}.phnav button.on{color:var(--info)}
 .scr{display:none}.scr.on{display:block}.stp{display:none}.stp.on{display:block}
 .h{font-size:16px;font-weight:600;margin:2px 0 12px}
 .rolecard{width:100%;text-align:left;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:13px;cursor:pointer;font-size:14px}
@@ -79,7 +81,7 @@ table.reg td{padding:8px;border-bottom:1px solid var(--border)}
 .databar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px}
 .databar .spacer{flex:1}
 .btn.file{position:relative;overflow:hidden}.btn.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.foot{text-align:center;color:var(--faint);font-size:12px;margin-top:24px}
+.foot{text-align:center;color:var(--faint);font-size:12px;margin-top:40px;padding-top:14px;border-top:1px solid var(--border)}
 @media(max-width:720px){.grid2{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -149,17 +151,14 @@ table.reg th,table.reg td{white-space:nowrap}
 <div class="phone">
 <div class="phbar">
   <div class="lg"><img src="nrsa-logo.png" alt="NRSA" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'" /><svg viewBox="0 0 24 24" class="i" style="display:none"><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 l4 -6 h4 l2.5 6"/><line x1="10" y1="10" x2="14.5" y2="10"/></svg>
-  <div><div style="font-size:14px;font-weight:600;line-height:1.15">SaferMotorcycling</div><div class="small muted" style="line-height:1.3">NRSA field app</div></div></div>
-  <span class="badge muted2" id="rolechip">home</span>
+  <div><div style="font-size:15px;font-weight:600;line-height:1.15">NRSA Field App</div></div></div>
 </div>
 <div class="phbody">
 
 <div class="scr on" id="s-home">
-  <p class="h">What do you want to do?</p>
   <button class="rolecard" onclick="go('register')"><span class="ic" style="background:var(--info-bg);color:var(--info)"><svg viewBox="0 0 24 24" class="i"><circle cx="9" cy="8" r="3.4"/><path d="M3.6 20 c0 -3.6 3 -5.6 5.4 -5.6 c1 0 2 .3 2.8 .8"/><line x1="17.5" y1="13.5" x2="17.5" y2="20"/><line x1="14.2" y1="16.7" x2="20.8" y2="16.7"/></svg></span><span style="flex:1"><b style="font-weight:600">Register a rider</b><br><span class="muted small">Digital warden · onboarding</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
   <button class="rolecard" onclick="go('verify')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/><line x1="18" y1="18" x2="21" y2="21"/></svg></span><span style="flex:1"><b style="font-weight:600">Verify a rider</b><br><span class="muted small">Passenger or police · look up</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
   <button class="rolecard" onclick="topView('command')"><span class="ic" style="background:var(--surface2);color:var(--text)"><svg viewBox="0 0 24 24" class="i"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="6.5" width="3" height="11.5"/><rect x="16" y="13.5" width="3" height="4.5"/></svg></span><span style="flex:1"><b style="font-weight:600">Command centre</b><br><span class="muted small">NRSA oversight dashboard</span></span><svg viewBox="0 0 24 24" class="i faint"><polyline points="9 6 15 12 9 18"/></svg></button>
-  <p class="small faint" style="margin-top:14px;line-height:1.6">Verification runs against the loaded rider list. Import NRSA's real data in the Registry tab.</p>
 </div>
 
 <div class="scr" id="s-register">
@@ -215,7 +214,7 @@ table.reg th,table.reg td{white-space:nowrap}
 <div class="scr" id="s-verify">
   <button class="btn ghost" onclick="go('home')"><svg viewBox="0 0 24 24" class="i"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="11 7 6 12 11 17"/></svg>home</button>
   <p class="h">Verify a rider</p>
-  <p class="small muted" style="margin:0 0 8px">Look up against the registry by plate, name or Ghana Card.</p>
+  <p class="small faint" style="margin:0 0 10px;line-height:1.6">Verification runs against the loaded rider list. Import NRSA's real data in the Registry tab.</p>
   <div class="vrow"><input type="text" id="vq" placeholder="NR 4821-19 · Yakubu · GHA-…" /><button class="btn primary" style="width:auto;margin:0;padding:0 14px" onclick="doVerify()"><svg viewBox="0 0 24 24" class="i"><circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg></button></div>
   <button class="btn" onclick="simScan()"><svg viewBox="0 0 24 24" class="i"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="15" x2="14" y2="21"/><line x1="18" y1="14" x2="21" y2="14"/></svg>Simulate tag scan</button>
   <div id="vres" style="margin-top:14px"></div>
@@ -408,7 +407,7 @@ function norm(s){return (s||"").toString().trim().toLowerCase();}
 function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
 function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}track('tab',{tab:name});}
-function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});$('rolechip').textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
+function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});var rc=$('rolechip');if(rc)rc.textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
 function regStep(n){for(var i=1;i<=5;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
 function confirmUnion(){var u=$('reg-union');if(u){$('union-name').textContent=u.value;}reveal('union-res','union-cont');}
 function reveal(a,b){var e=$(a);if(e)e.style.display='block';if(b){var c=$(b);if(c)c.style.display='block';}}
