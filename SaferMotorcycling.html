@@ -111,6 +111,8 @@ table.reg th,table.reg td{white-space:nowrap}
   .kpi .num{font-size:22px}
 }
 .smc-fs{font-size:18px;font-weight:700;text-align:center;line-height:28px;width:30px;height:30px;display:block;background:#fff;color:#333;text-decoration:none}
+#mapModal #map{height:62vh;min-height:280px;border:none;border-radius:0;flex:1}
+#map-Accra svg,#map-Tamale svg{display:block}
 @media(max-width:480px){
   .stage{padding:0;background:transparent}
   .phone{border:none;border-radius:0;box-shadow:none;min-height:auto}
@@ -235,9 +237,8 @@ table.reg th,table.reg td{white-space:nowrap}
   <div class="grid2">
     <div class="panel">
       <h3>Crash &amp; violation hotspots</h3>
-      <p class="small muted" style="margin:0 0 4px">Last 90 days · illustrative · hover a point</p>
-      <div id="map"></div>
-      <div id="map-Accra" style="display:none">
+      <p class="small muted" style="margin:0 0 4px">Last 90 days · tap the map for the live satellite / 3D view</p>
+      <div id="map-Accra" style="cursor:pointer" onclick="openMapModal()">
       <svg viewBox="0 0 600 330" width="100%" style="display:block">
         <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
         <path d="M0 288 Q150 278 300 288 T600 286 L600 330 L0 330 Z" fill="#bcd6ee" opacity="0.55"/>
@@ -262,7 +263,7 @@ table.reg th,table.reg td{white-space:nowrap}
         <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif"><text x="308" y="146">Circle</text><text x="150" y="202">Kaneshie</text><text x="498" y="226">Tema</text><text x="392" y="58">Madina</text><text x="402" y="186">Spintex</text><text x="150" y="66">Achimota</text><text x="40" y="208">Kasoa</text><text x="486" y="282" opacity="0.85">Gulf of Guinea</text></g>
       </svg>
       </div>
-      <div id="map-Tamale" style="display:none">
+      <div id="map-Tamale" style="display:none;cursor:pointer" onclick="openMapModal()">
       <svg viewBox="0 0 600 330" width="100%" style="display:block">
         <rect x="0" y="0" width="600" height="330" fill="var(--surface)" rx="10"/>
         <path d="M40 250 C160 210 220 260 320 220 C420 180 520 230 580 200" stroke="#bcd6ee" stroke-width="6" fill="none" opacity="0.7"/>
@@ -279,7 +280,7 @@ table.reg th,table.reg td{white-space:nowrap}
         <g fill="#6c6b64" font-size="12" font-family="-apple-system,Segoe UI,Roboto,sans-serif"><text x="392" y="96">Aboabo</text><text x="426" y="162">Central market</text><text x="262" y="40">Education ridge</text><text x="392" y="236">Lamashegu</text><text x="262" y="303">Kalpohin</text><text x="118" y="162">Sagnarigu</text></g>
       </svg>
       </div>
-      <div class="legend"><span><span class="sw" style="background:#e24b4a"></span>high-risk junction</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span><span class="sw" style="background:#e24b4a"></span>live SOS (pulsing)</span><span class="faint">satellite · switch to Streets, top-right</span></div>
+      <div class="legend"><span><span class="sw" style="background:#e24b4a"></span>high-risk junction</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span class="faint">tap the map → live satellite / 3D</span></div>
     </div>
     <div class="panel">
       <h3>Registrations per week</h3>
@@ -311,6 +312,19 @@ table.reg th,table.reg td{white-space:nowrap}
 
 <div id="incModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeIncident()">
   <div style="background:var(--bg);border-radius:var(--radius-lg);max-width:460px;width:100%;max-height:85vh;overflow:auto;padding:18px"><div id="incBody"></div></div>
+</div>
+
+<div id="mapModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeMapModal()">
+  <div style="background:var(--bg);border-radius:var(--radius-lg);width:min(960px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <strong id="mapTitle" style="font-size:15px;flex:1">Greater Accra</strong>
+      <button class="btn sm" onclick="openGoogleMaps()">Google Maps</button>
+      <button class="btn sm" onclick="open3D()">3D · Earth</button>
+      <button class="btn sm" onclick="closeMapModal()">Close</button>
+    </div>
+    <div id="map"></div>
+    <div class="legend" style="padding:8px 14px;margin:0"><span><span class="sw" style="background:#e24b4a"></span>high-risk</span><span><span class="sw" style="background:#ef9f27"></span>watch</span><span><span class="sw" style="background:#e24b4a"></span>live SOS</span><span class="faint">satellite · Streets toggle top-right</span></div>
+  </div>
 </div>
 
 <script>
@@ -550,6 +564,11 @@ function renderMapIncidents(){
   });
 }
 function mapOpen(id){if(MAP)MAP.closePopup();openIncident(id);}
+function openMapModal(){$('mapModal').style.display='flex';$('mapTitle').textContent=REGIONS[current].label;if(!MAP)initMap();setTimeout(function(){if(MAP){MAP.invalidateSize();renderMap();renderMapIncidents();}},180);}
+function closeMapModal(){$('mapModal').style.display='none';}
+function mapCenter(){if(MAP){var c=MAP.getCenter();return [c.lat,c.lng,Math.round(MAP.getZoom())];}var R=REGIONS[current];return [R.center[0],R.center[1],R.zoom||13];}
+function openGoogleMaps(){var c=mapCenter();window.open('https://www.google.com/maps/@'+c[0]+','+c[1]+','+c[2]+'z/data=!3m1!1e3','_blank','noopener');}
+function open3D(){var c=mapCenter();window.open('https://earth.google.com/web/@'+c[0]+','+c[1]+',300a,3000d,35y,0h,60t,0r','_blank','noopener');}
 function switchRegion(name){
   current=name;
   $('rg-accra').classList.toggle('on',name==='Accra');
@@ -561,10 +580,12 @@ function switchRegion(name){
   $('m-ins').textContent=R.insured+'%';
   $('m-ver').textContent=R.verif.toLocaleString();
   $('m-score').textContent=R.score;
-  renderMap();
+  $('map-Accra').style.display=(name==='Accra')?'block':'none';
+  $('map-Tamale').style.display=(name==='Tamale')?'block':'none';
+  if(MAP)renderMap();
   LIVE_INCIDENTS=[];
   renderFeed();
-  renderMapIncidents();
+  if(MAP)renderMapIncidents();
   renderTelematics();
   renderReg($('regSearch').value);
   pollIncidents();
@@ -595,7 +616,7 @@ document.getElementById('importInput').addEventListener('change',importCSV);
 document.getElementById('regSearch').addEventListener('input',function(){renderReg(this.value);});
 document.getElementById('incLogSearch').addEventListener('input',function(){renderIncidentLog(this.value);});
 document.getElementById('vq').addEventListener('keydown',function(e){if(e.key==='Enter')doVerify();});
-regStep(1);initMap();switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
+regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
 </script>
 </body>
 </html>
