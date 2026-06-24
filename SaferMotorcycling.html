@@ -115,6 +115,14 @@ table.reg th,table.reg td{white-space:nowrap}
 .smc-fs{font-size:18px;font-weight:700;text-align:center;line-height:28px;width:30px;height:30px;display:block;background:#fff;color:#333;text-decoration:none}
 #mapModal #map{height:62vh;min-height:280px;border:none;border-radius:0;flex:1}
 #map-Accra svg,#map-Tamale svg{display:block}
+@keyframes smc-blink-halo{0%,100%{opacity:0.18}50%{opacity:0.55}}
+@keyframes smc-blink-halo-fast{0%,100%{opacity:0.18}50%{opacity:0.7}}
+@keyframes smc-blink-dot{0%,100%{opacity:0.75}50%{opacity:1}}
+#map-Accra svg circle[fill="#b3261e"][opacity],#map-Tamale svg circle[fill="#b3261e"][opacity]{animation:smc-blink-halo-fast 1.3s ease-in-out infinite;will-change:opacity}
+#map-Accra svg circle[fill="#d99000"][opacity],#map-Tamale svg circle[fill="#d99000"][opacity]{animation:smc-blink-halo 2s ease-in-out infinite;will-change:opacity}
+#map-Accra svg circle[fill="#b3261e"]:not([opacity]),#map-Tamale svg circle[fill="#b3261e"]:not([opacity]){animation:smc-blink-dot 1.3s ease-in-out infinite;will-change:opacity}
+#map-Accra svg circle[fill="#9a6b00"]:not([opacity]),#map-Tamale svg circle[fill="#9a6b00"]:not([opacity]){animation:smc-blink-dot 2s ease-in-out infinite;will-change:opacity}
+@media(prefers-reduced-motion:reduce){#map-Accra svg circle,#map-Tamale svg circle{animation:none!important}}
 @media(max-width:480px){
   .stage{padding:0;background:transparent}
   .phone{border:none;border-radius:0;box-shadow:none;min-height:auto}
