@@ -89,13 +89,25 @@ function seedIncident(inc) {
 }
 
 let memEvents = [];
+let memFallback = [];
+let lastEventError = null;
 
 async function addEvent(e) {
   const rec = { session_id: e.session_id || null, event_type: e.event_type || "unknown", event_data: e.event_data || {}, user_agent: e.user_agent || null };
   if (supa) {
-    const { error } = await supa.from("usage_events").insert(rec);
-    if (error) throw error;
-    return rec;
+    try {
+      const { error } = await supa.from("usage_events").insert(rec);
+      if (error) throw error;
+      lastEventError = null;
+      return rec;
+    } catch (err) {
+      // Don't silently drop: buffer to memory so events are still visible until table is created / Supabase recovers.
+      lastEventError = err.message || String(err);
+      memFallback.unshift({ ...rec, ts: new Date().toISOString(), _fallback: true });
+      if (memFallback.length > 500) memFallback.length = 500;
+      console.warn("store: supabase write failed, buffered in memory:", lastEventError);
+      return rec;
+    }
   }
   memEvents.unshift({ ...rec, ts: new Date().toISOString() });
   if (memEvents.length > 1000) memEvents.length = 1000;
@@ -105,11 +117,24 @@ async function addEvent(e) {
 async function listEvents(limit) {
   const n = Math.min(parseInt(limit, 10) || 100, 500);
   if (supa) {
-    const { data, error } = await supa.from("usage_events").select("*").order("ts", { ascending: false }).limit(n);
-    if (error) throw error;
-    return data || [];
+    try {
+      const { data, error } = await supa.from("usage_events").select("*").order("ts", { ascending: false }).limit(n);
+      if (error) throw error;
+      lastEventError = null;
+      // Merge any in-memory fallback so user sees everything in one feed.
+      const combined = memFallback.concat(data || []);
+      combined.sort((a, b) => String(b.ts || "").localeCompare(String(a.ts || "")));
+      return combined.slice(0, n);
+    } catch (err) {
+      lastEventError = err.message || String(err);
+      return memFallback.slice(0, n);
+    }
   }
   return memEvents.slice(0, n);
 }
 
-module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, seedIncident, usingSupabase: () => !!supa };
+function eventStoreStatus() {
+  return { supabase: !!supa, fallback_count: memFallback.length, last_error: lastEventError };
+}
+
+module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, eventStoreStatus, seedIncident, usingSupabase: () => !!supa };

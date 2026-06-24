@@ -207,8 +207,11 @@ app.post("/events", async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
 });
 app.get("/events", async (req, res) => {
-  try { const list = await store.listEvents(req.query.limit); res.json({ ok: true, events: list }); }
-  catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+  try {
+    const list = await store.listEvents(req.query.limit);
+    const status = store.eventStoreStatus ? store.eventStoreStatus() : {};
+    res.json({ ok: true, events: list, fallback_count: status.fallback_count || 0, last_error: status.last_error || null, supabase: !!status.supabase });
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
 });
 
 // Registrations — riders onboarded in the field app, so NRSA sees what gets entered.
