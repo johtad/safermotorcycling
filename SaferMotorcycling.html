@@ -655,7 +655,27 @@ document.getElementById('vq').addEventListener('keydown',function(e){if(e.key===
 regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
 track('page_view',{w:window.innerWidth,h:window.innerHeight,tz_min:new Date().getTimezoneOffset(),ref:document.referrer||'',dev:DEV});
 if(DEV){var d=document.createElement('div');d.id='devPanel';d.style.cssText='position:fixed;right:12px;bottom:12px;width:340px;max-height:50vh;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 18px rgba(0,0,0,.12);z-index:80;font-size:12px';d.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface)"><strong style="flex:1">Visitor activity</strong><span class="small muted">sid '+SID.slice(0,10)+'</span><button class="btn sm" style="height:26px;padding:0 8px;font-size:11px" onclick="loadEvents()">refresh</button></div><div id="devEvents" style="padding:8px 12px"></div>';document.body.appendChild(d);loadEvents();setInterval(loadEvents,15000);}
-function loadEvents(){if(!DEV)return;fetch(BACKEND+'/events?limit=80').then(function(r){return r.json();}).then(function(d){var rows=(d&&d.events)||[];var fb=(d&&d.fallback_count)||0;var err=(d&&d.last_error)||'';var warn=fb?'<div class="badge warn" style="margin-bottom:8px;padding:5px 9px;font-size:11px;line-height:1.4">'+fb+' event(s) in memory-only fallback — Supabase write failed: '+esc(err.slice(0,90))+'</div>':'';var by={};rows.forEach(function(e){var k=(e.session_id||'?').slice(0,8);(by[k]=by[k]||[]).push(e);});var html='';Object.keys(by).slice(0,6).forEach(function(k){html+='<div style="margin-bottom:8px"><div style="font-weight:600;color:var(--info)">'+esc(k)+(k===SID.slice(0,8)?' <span class="badge info" style="padding:1px 6px;font-size:10px">you</span>':'')+' · '+by[k].length+' events</div>';by[k].slice(0,8).forEach(function(e){var t=e.event_type||'?';var when=fmtShort(e.ts);var dat=e.event_data?Object.keys(e.event_data).map(function(k){return k+'='+JSON.stringify(e.event_data[k])}).join(' '):'';var fbmark=e._fallback?' <span class="faint" title="memory fallback">~</span>':'';html+='<div style="padding:2px 0;color:var(--muted)"><span class="mono">'+esc(when)+'</span> <strong style="color:var(--text)">'+esc(t)+'</strong>'+fbmark+' <span class="faint">'+esc(dat)+'</span></div>';});html+='</div>';});$('devEvents').innerHTML=warn+(html||'<div class="muted">no events yet</div>');}).catch(function(){$('devEvents').innerHTML='<div class="muted">offline</div>';});}
+function tzLabel(tz){if(tz===undefined||tz===null||isNaN(tz))return 'unknown timezone';var utc=-tz/60;var s='UTC'+(utc>=0?'+':'')+utc;var hint={0:'Ghana, UK, Senegal',60:'Cape Verde','-60':'Nigeria, France, UK (summer)','-120':'South Africa, Egypt (summer)','-180':'Kenya, Saudi Arabia, Moscow','-240':'UAE',  '-330':'India','-540':'Japan, Korea','-600':'Sydney','-780':'New Zealand',240:'US Eastern (EDT)',300:'US Eastern (EST)',360:'US Central',420:'Los Angeles, US Pacific (PDT)',480:'Los Angeles, US Pacific (PST)'}[tz];return s+(hint?' · '+hint:'');}
+function deviceLabel(ua){if(!ua)return '';if(/iPhone/.test(ua))return 'iPhone';if(/iPad/.test(ua))return 'iPad';if(/Android/.test(ua))return 'Android';if(/Macintosh/.test(ua))return 'Mac';if(/Windows/.test(ua))return 'Windows';if(/Linux/.test(ua))return 'Linux';return 'unknown device';}
+function loadEvents(){if(!DEV)return;fetch(BACKEND+'/events?limit=200').then(function(r){return r.json();}).then(function(d){
+  var rows=(d&&d.events)||[];var fb=(d&&d.fallback_count)||0;var err=(d&&d.last_error)||'';
+  var warn=fb?'<div class="badge warn" style="margin-bottom:8px;padding:5px 9px;font-size:11px;line-height:1.4">'+fb+' event(s) in memory-only fallback — Supabase write failed: '+esc(err.slice(0,90))+'</div>':'';
+  var by={};rows.forEach(function(e){var k=(e.session_id||'?').slice(0,8);(by[k]=by[k]||[]).push(e);});
+  var html='';Object.keys(by).slice(0,8).forEach(function(k){
+    var es=by[k];
+    var pv=es.filter(function(e){return e.event_type==='page_view'&&e.event_data;})[0];
+    var ed=(pv&&pv.event_data)||{};
+    var tz=tzLabel(ed.tz_min);
+    var dev=deviceLabel(pv&&pv.user_agent);
+    var ref=ed.ref||'';
+    var sub='<div class="small faint" style="margin-top:2px;line-height:1.4">'+esc(tz)+(dev?' · '+esc(dev):'')+(ref?' · from <span class="mono">'+esc(ref.replace(/^https?:\/\//,'').slice(0,40))+'</span>':' · direct')+'</div>';
+    var youTag=(k===SID.slice(0,8))?' <span class="badge info" style="padding:1px 6px;font-size:10px">you</span>':'';
+    html+='<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div style="font-weight:600;color:var(--info)">'+esc(k)+youTag+' · '+es.length+' events</div>'+sub;
+    es.slice(0,6).forEach(function(e){var t=e.event_type||'?';var when=fmtShort(e.ts);var dat=e.event_data?Object.keys(e.event_data).slice(0,3).map(function(kk){return kk+'='+JSON.stringify(e.event_data[kk]).slice(0,20)}).join(' '):'';var fbmark=e._fallback?' <span class="faint" title="memory fallback">~</span>':'';html+='<div style="padding:2px 0;color:var(--muted)"><span class="mono">'+esc(when)+'</span> <strong style="color:var(--text)">'+esc(t)+'</strong>'+fbmark+' <span class="faint">'+esc(dat)+'</span></div>';});
+    html+='</div>';
+  });
+  $('devEvents').innerHTML=warn+(html||'<div class="muted">no events yet</div>');
+}).catch(function(){$('devEvents').innerHTML='<div class="muted">offline</div>';});}
 </script>
 </body>
 </html>
