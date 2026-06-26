@@ -382,7 +382,23 @@ app.get("/telematics/insights", async (req, res) => {
     events.forEach((e) => { if (!e.location_label) return; byLocation[e.location_label] = (byLocation[e.location_label] || 0) + 1; });
     const topHotspots = Object.keys(byLocation).map((loc) => ({ location: loc, events: byLocation[loc] }))
       .sort((a, b) => b.events - a.events).slice(0, 6);
-    res.json({ ok: true, region: region || "all", window_days: 30, events_by_hour: byHour, by_union: byUnion, top_hotspots: topHotspots });
+    // By vehicle type
+    const vtAgg = {};
+    trips.forEach((t) => {
+      const v = t.vehicle_type || "unknown";
+      if (!vtAgg[v]) vtAgg[v] = { trips: 0, score_sum: 0, km_sum: 0 };
+      vtAgg[v].trips++; vtAgg[v].score_sum += parseInt(t.safety_score, 10) || 0; vtAgg[v].km_sum += parseFloat(t.distance_km) || 0;
+    });
+    const eventsByType = {};
+    events.forEach((e) => { const v = e.vehicle_type || "unknown"; eventsByType[v] = (eventsByType[v] || 0) + 1; });
+    const byVehicleType = Object.keys(vtAgg).map((v) => ({
+      vehicle_type: v,
+      trips: vtAgg[v].trips,
+      km: Math.round(vtAgg[v].km_sum),
+      avg_safety_score: Math.round(vtAgg[v].score_sum / vtAgg[v].trips),
+      events_per_100km: vtAgg[v].km_sum > 0 ? Math.round(((eventsByType[v] || 0) * 100) / vtAgg[v].km_sum * 10) / 10 : 0
+    })).sort((a, b) => b.avg_safety_score - a.avg_safety_score);
+    res.json({ ok: true, region: region || "all", window_days: 30, events_by_hour: byHour, by_union: byUnion, top_hotspots: topHotspots, by_vehicle_type: byVehicleType });
   } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
 });
 

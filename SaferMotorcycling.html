@@ -359,6 +359,11 @@ table.reg th,table.reg td{white-space:nowrap}
       <div id="ins-hotspots"></div>
       <p class="small muted" style="margin:8px 0 0">Where to target signage, lighting, road engineering, and rider training.</p>
     </div>
+    <div style="margin-top:18px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">By vehicle type</div>
+      <div id="ins-vtypes"></div>
+      <p class="small muted" style="margin:8px 0 0">Are tricycles really safer than motorcycles? The data answers — and shapes vehicle-class regulation.</p>
+    </div>
   </div>
 </div>
 
@@ -633,6 +638,9 @@ function renderInsights(){
     $('ins-unions').innerHTML=unions.length?unions.slice(0,4).map(function(u,i){var rank=i+1;var med=(u.avg_safety_score>=80?'ok':(u.avg_safety_score>=65?'warn':'bad'));return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px"><span class="mono faint" style="width:18px">'+rank+'</span><span style="flex:1">'+esc(u.union||'?')+'</span><span class="badge '+med+'" style="padding:2px 7px">'+u.avg_safety_score+'</span><span class="small muted" style="width:80px;text-align:right">'+u.events_per_100km+'/100km</span></div>';}).join(''):'<div class="muted small">no data yet</div>';
     var hot=d.top_hotspots||[];
     $('ins-hotspots').innerHTML=hot.length?hot.map(function(h,i){var maxC=hot[0].events||1;var pct=Math.round((h.events/maxC)*100);return '<div style="display:flex;align-items:center;gap:10px;margin:5px 0;font-size:13px"><span class="mono faint" style="width:18px">'+(i+1)+'</span><span style="width:170px">'+esc(h.location||'?')+'</span><span style="flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:7px;width:'+pct+'%;background:var(--danger);opacity:0.8"></span></span><span style="width:50px;text-align:right">'+h.events+'</span></div>';}).join(''):'<div class="muted small">no data yet</div>';
+    var vts=d.by_vehicle_type||[];
+    var typeEmoji={motorcycle:'🏍',tricycle:'🛺',voxy:'🚐'};
+    $('ins-vtypes').innerHTML=vts.length?vts.map(function(v,i){var med=(v.avg_safety_score>=80?'ok':(v.avg_safety_score>=65?'warn':'bad'));var emoji=typeEmoji[v.vehicle_type]||'•';return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px"><span class="mono faint" style="width:18px">'+(i+1)+'</span><span style="width:24px;font-size:16px">'+emoji+'</span><span style="width:120px;text-transform:capitalize">'+esc(v.vehicle_type||'?')+'</span><span class="badge '+med+'" style="padding:2px 7px">'+v.avg_safety_score+'</span><span class="small muted" style="flex:1;text-align:right">'+v.trips+' trips · '+v.km+' km · '+v.events_per_100km+' events/100km</span></div>';}).join(''):'<div class="muted small">no data yet</div>';
   }).catch(function(){});
 }
 var MAP=null,HOT=null,LIVEL=null,mapReady=false;
