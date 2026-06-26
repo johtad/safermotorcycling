@@ -329,9 +329,36 @@ table.reg th,table.reg td{white-space:nowrap}
     <div class="tscroll"><table class="reg"><thead><tr><th>Time</th><th>Type</th><th>Rider</th><th>Location</th><th>Region</th><th>Status</th><th>Source</th></tr></thead><tbody id="incLogBody"></tbody></table></div>
   </div>
   <div class="panel" style="margin-top:16px">
-    <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400">(<span id="tel-devices">0</span> devices fitted)</span></h3>
-    <p class="small muted" style="margin:0 0 10px">From on-bike GPS + motion trackers · these events feed each rider's 0–100 safety score</p>
+    <h3>Safety-score inputs · telematics <span class="small muted" style="font-weight:400" id="tel-meta">loading…</span></h3>
+    <p class="small muted" style="margin:0 0 10px">From on-bike GPS + motion trackers · last 30 days · feeds each rider's 0–100 safety score</p>
+    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:14px">
+      <div class="kpi"><div class="lab">Trips logged</div><div class="num" id="tel-trips">—</div></div>
+      <div class="kpi"><div class="lab">Distance covered</div><div class="num" id="tel-km">—</div></div>
+      <div class="kpi"><div class="lab">Avg trip score</div><div class="num" id="tel-avgscore">—</div></div>
+      <div class="kpi"><div class="lab">Crash events</div><div class="num" id="tel-crash">—</div></div>
+    </div>
     <div id="telBars"></div>
+  </div>
+  <div class="panel" style="margin-top:16px">
+    <h3>Policy insights <span class="small muted" style="font-weight:400">· what the data tells NRSA</span></h3>
+    <p class="small muted" style="margin:0 0 12px">Aggregations from the last 30 days of telematics — for planning, targeted training, and enforcement.</p>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px" class="grid2">
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Events by time of day</div>
+        <div id="ins-hours" style="display:flex;align-items:flex-end;gap:3px;height:100px"></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:4px"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>
+        <p class="small muted" style="margin:8px 0 0">Peaks reveal when to deploy MTTD presence + ambulance pre-positioning.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Safest unions</div>
+        <div id="ins-unions"></div>
+      </div>
+    </div>
+    <div style="margin-top:18px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">Top event hotspots</div>
+      <div id="ins-hotspots"></div>
+      <p class="small muted" style="margin:8px 0 0">Where to target signage, lighting, road engineering, and rider training.</p>
+    </div>
   </div>
 </div>
 
@@ -580,18 +607,33 @@ function renderFeed(){
   }).join('');
 }
 function renderTelematics(){
-  var t=REGIONS[current].telematics||{devices:0,harshBrake:0,speeding:0,cornering:0,night:0};
-  $('tel-devices').textContent=(t.devices||0).toLocaleString();
-  var items=[
-    {k:"harsh braking /100km",v:t.harshBrake,max:25},
-    {k:"speeding events /100km",v:t.speeding,max:25},
-    {k:"harsh cornering /100km",v:t.cornering,max:25},
-    {k:"night riding (% of trips)",v:t.night,max:60}
-  ];
-  $('telBars').innerHTML=items.map(function(it){
-    var pct=Math.round((it.v/it.max)*100);
-    return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px"><span style="width:180px;color:var(--muted)">'+esc(it.k)+'</span><span style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:8px;width:'+pct+'%;background:var(--info)"></span></span><span style="width:30px;text-align:right">'+it.v+'</span></div>';
-  }).join('');
+  fetch(BACKEND+'/telematics/summary?region='+current).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok){$('tel-meta').textContent='no data yet';return;}
+    $('tel-meta').textContent=(d.devices_fitted||0)+' devices · '+(d.total_events||0)+' events tracked';
+    $('tel-trips').textContent=(d.trips_30d||0).toLocaleString();
+    $('tel-km').textContent=(d.distance_km_30d||0).toLocaleString()+' km';
+    $('tel-avgscore').textContent=(d.avg_safety_score||0);
+    $('tel-crash').textContent=(d.crash_events||0);
+    var items=[
+      {k:"harsh braking /100km",v:d.harsh_brake_per_100km,max:25},
+      {k:"speeding events /100km",v:d.speeding_per_100km,max:25},
+      {k:"harsh cornering /100km",v:d.harsh_corner_per_100km,max:25},
+      {k:"night riding (% of trips)",v:d.night_ride_pct,max:60}
+    ];
+    $('telBars').innerHTML=items.map(function(it){var v=it.v||0;var pct=Math.min(100,Math.round((v/it.max)*100));return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px"><span style="width:200px;color:var(--muted)">'+esc(it.k)+'</span><span style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:8px;width:'+pct+'%;background:var(--info)"></span></span><span style="width:40px;text-align:right">'+v+'</span></div>';}).join('');
+  }).catch(function(){$('tel-meta').textContent='offline';});
+  renderInsights();
+}
+function renderInsights(){
+  fetch(BACKEND+'/telematics/insights?region='+current).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok)return;
+    var hrs=d.events_by_hour||[];var maxH=Math.max(1,Math.max.apply(null,hrs));
+    $('ins-hours').innerHTML=hrs.map(function(n,h){var pct=Math.round((n/maxH)*100);var rush=(h>=6&&h<=8)||(h>=16&&h<=18)||h>=22||h<5;return '<div style="flex:1;background:'+(rush?'var(--danger)':'var(--info)')+';opacity:0.75;height:'+pct+'%;min-height:2px;border-radius:2px 2px 0 0" title="'+h+'h: '+n+' events"></div>';}).join('');
+    var unions=d.by_union||[];
+    $('ins-unions').innerHTML=unions.length?unions.slice(0,4).map(function(u,i){var rank=i+1;var med=(u.avg_safety_score>=80?'ok':(u.avg_safety_score>=65?'warn':'bad'));return '<div style="display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px"><span class="mono faint" style="width:18px">'+rank+'</span><span style="flex:1">'+esc(u.union||'?')+'</span><span class="badge '+med+'" style="padding:2px 7px">'+u.avg_safety_score+'</span><span class="small muted" style="width:80px;text-align:right">'+u.events_per_100km+'/100km</span></div>';}).join(''):'<div class="muted small">no data yet</div>';
+    var hot=d.top_hotspots||[];
+    $('ins-hotspots').innerHTML=hot.length?hot.map(function(h,i){var maxC=hot[0].events||1;var pct=Math.round((h.events/maxC)*100);return '<div style="display:flex;align-items:center;gap:10px;margin:5px 0;font-size:13px"><span class="mono faint" style="width:18px">'+(i+1)+'</span><span style="width:170px">'+esc(h.location||'?')+'</span><span style="flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:7px;width:'+pct+'%;background:var(--danger);opacity:0.8"></span></span><span style="width:50px;text-align:right">'+h.events+'</span></div>';}).join(''):'<div class="muted small">no data yet</div>';
+  }).catch(function(){});
 }
 var MAP=null,HOT=null,LIVEL=null,mapReady=false;
 function pulseIcon(color,size,fast){return L.divIcon({className:'',html:'<span class="smc-ping'+(fast?' fast':'')+'" style="--c:'+color+';width:'+size+'px;height:'+size+'px"></span>',iconSize:[size,size],iconAnchor:[size/2,size/2]});}

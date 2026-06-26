@@ -293,6 +293,203 @@ function generateSeedFleet() {
 }
 store.ensureSeededVehicles(generateSeedFleet);
 
+// ---------- Telematics ----------
+// Discrete driving-behaviour events (harsh brake, speeding, harsh corner, night-ride, crash detected).
+// One row per event. Denormalized with union/vehicle_type so aggregations are cheap.
+app.post("/telematics/events", async (req, res) => {
+  try {
+    const b = req.body || {};
+    if (Array.isArray(b)) { const n = await store.addTelEventsBatch(b); res.json({ ok: true, inserted: n }); }
+    else { await store.addTelEvent(b); res.json({ ok: true }); }
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
+// Completed trips with summary stats + computed safety score.
+app.post("/telematics/trips", async (req, res) => {
+  try {
+    const b = req.body || {};
+    if (Array.isArray(b)) { const n = await store.addTelTripsBatch(b); res.json({ ok: true, inserted: n }); }
+    else { await store.addTelTrip(b); res.json({ ok: true }); }
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
+// Aggregated dashboard metrics: feeds the existing "telematics safety-score inputs" panel with REAL data.
+app.get("/telematics/summary", async (req, res) => {
+  try {
+    const region = req.query.region;
+    const sinceISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const [events, trips, vehicles] = await Promise.all([
+      store.listTelEvents(region, sinceISO),
+      store.listTelTrips(region, sinceISO),
+      store.listVehicles(region)
+    ]);
+    const totalKm = trips.reduce((a, t) => a + (parseFloat(t.distance_km) || 0), 0);
+    const per100km = (n) => (totalKm > 0 ? Math.round((n * 100) / totalKm * 10) / 10 : 0);
+    const byType = {};
+    events.forEach((e) => { byType[e.event_type] = (byType[e.event_type] || 0) + 1; });
+    const nightEvents = events.filter((e) => e.event_type === "night_ride").length;
+    const avgScore = trips.length ? Math.round(trips.reduce((a, t) => a + (parseInt(t.safety_score, 10) || 0), 0) / trips.length) : 0;
+    res.json({
+      ok: true,
+      region: region || "all",
+      window_days: 30,
+      devices_fitted: vehicles.length,
+      trips_30d: trips.length,
+      distance_km_30d: Math.round(totalKm),
+      avg_safety_score: avgScore,
+      harsh_brake_per_100km: per100km(byType.harsh_brake || 0),
+      speeding_per_100km: per100km(byType.speeding || 0),
+      harsh_corner_per_100km: per100km(byType.harsh_corner || 0),
+      night_ride_pct: trips.length ? Math.round((nightEvents / trips.length) * 100) : 0,
+      crash_events: byType.crash_detected || 0,
+      total_events: events.length,
+      events_by_type: byType
+    });
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
+// Policy insights: time-of-day, by-union, top hotspots. The NRSA-grade analytics.
+app.get("/telematics/insights", async (req, res) => {
+  try {
+    const region = req.query.region;
+    const sinceISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const [events, trips] = await Promise.all([
+      store.listTelEvents(region, sinceISO),
+      store.listTelTrips(region, sinceISO)
+    ]);
+    // Time-of-day: 24-hour event distribution
+    const byHour = new Array(24).fill(0);
+    events.forEach((e) => { const h = new Date(e.ts).getHours(); byHour[h] = (byHour[h] || 0) + 1; });
+    // By union: avg safety score from trips + event rate
+    const unionAgg = {};
+    trips.forEach((t) => {
+      const u = t.union_name || "unknown";
+      if (!unionAgg[u]) unionAgg[u] = { trips: 0, score_sum: 0, km_sum: 0 };
+      unionAgg[u].trips++;
+      unionAgg[u].score_sum += parseInt(t.safety_score, 10) || 0;
+      unionAgg[u].km_sum += parseFloat(t.distance_km) || 0;
+    });
+    const eventsByUnion = {};
+    events.forEach((e) => { const u = e.union_name || "unknown"; eventsByUnion[u] = (eventsByUnion[u] || 0) + 1; });
+    const byUnion = Object.keys(unionAgg).map((u) => ({
+      union: u,
+      trips: unionAgg[u].trips,
+      avg_safety_score: Math.round(unionAgg[u].score_sum / unionAgg[u].trips),
+      events_per_100km: unionAgg[u].km_sum > 0 ? Math.round(((eventsByUnion[u] || 0) * 100) / unionAgg[u].km_sum * 10) / 10 : 0
+    })).sort((a, b) => b.avg_safety_score - a.avg_safety_score);
+    // Top event hotspots: count events per location_label
+    const byLocation = {};
+    events.forEach((e) => { if (!e.location_label) return; byLocation[e.location_label] = (byLocation[e.location_label] || 0) + 1; });
+    const topHotspots = Object.keys(byLocation).map((loc) => ({ location: loc, events: byLocation[loc] }))
+      .sort((a, b) => b.events - a.events).slice(0, 6);
+    res.json({ ok: true, region: region || "all", window_days: 30, events_by_hour: byHour, by_union: byUnion, top_hotspots: topHotspots });
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
+// Generate realistic telematics history for the prototype demo:
+//  • ~25 trips per vehicle over the last 30 days (so each region has ~600 trips, ~12K km, ~700-900 events)
+//  • Events biased toward known crash hotspots (60%) and rush hours
+//  • Trip safety_score derived from event counts + severities (lower = worse driving)
+function generateTelematicsSeed(fleet) {
+  const accraHotspots = [
+    { label: "Kwame Nkrumah Circle", lat: 5.5705, lng: -0.1969 },
+    { label: "Kaneshie / Lapaz", lat: 5.558, lng: -0.234 },
+    { label: "Tema station", lat: 5.667, lng: -0.017 },
+    { label: "Madina", lat: 5.668, lng: -0.166 },
+    { label: "Tetteh Quarshie / Spintex", lat: 5.618, lng: -0.165 },
+    { label: "Achimota", lat: 5.618, lng: -0.227 },
+    { label: "Kasoa road", lat: 5.534, lng: -0.418 }
+  ];
+  const tamaleHotspots = [
+    { label: "Aboabo junction", lat: 9.398, lng: -0.836 },
+    { label: "Central market", lat: 9.407, lng: -0.853 },
+    { label: "Education ridge", lat: 9.43, lng: -0.85 },
+    { label: "Lamashegu junction", lat: 9.38, lng: -0.85 },
+    { label: "Kalpohin", lat: 9.39, lng: -0.872 },
+    { label: "Sagnarigu road", lat: 9.412, lng: -0.86 }
+  ];
+  const typeWeights = [
+    { type: "harsh_brake", w: 35 },
+    { type: "speeding", w: 25 },
+    { type: "harsh_corner", w: 20 },
+    { type: "night_ride", w: 15 },
+    { type: "crash_detected", w: 5 }
+  ];
+  const wSum = typeWeights.reduce((a, t) => a + t.w, 0);
+  function pickType() { let r = Math.random() * wSum, s = 0; for (const t of typeWeights) { s += t.w; if (r < s) return t.type; } return "harsh_brake"; }
+  // Weighted hour distribution: peaks at 7-9, 17-19, 22-1
+  function pickHour() {
+    const r = Math.random();
+    if (r < 0.25) return 6 + Math.floor(Math.random() * 4);
+    if (r < 0.5) return 16 + Math.floor(Math.random() * 4);
+    if (r < 0.65) return (22 + Math.floor(Math.random() * 4)) % 24;
+    return Math.floor(Math.random() * 24);
+  }
+  function nearHotspot(hs) { const p = hs[Math.floor(Math.random() * hs.length)]; return { lat: p.lat + (Math.random() - 0.5) * 0.012, lng: p.lng + (Math.random() - 0.5) * 0.012, label: p.label }; }
+  const events = [];
+  const trips = [];
+  const now = Date.now();
+  fleet.forEach((v) => {
+    const hotspots = v.region === "Accra" ? accraHotspots : tamaleHotspots;
+    const numTrips = 20 + Math.floor(Math.random() * 20);
+    // Some "bad rider" vehicles get more events per trip; align with seeded safety_score
+    const riskFactor = v.safety_score >= 85 ? 0.25 : (v.safety_score >= 70 ? 0.6 : 1.2);
+    for (let t = 0; t < numTrips; t++) {
+      const daysAgo = Math.floor(Math.random() * 30);
+      const hr = pickHour();
+      const start = new Date(now - daysAgo * 86400000); start.setHours(hr, Math.floor(Math.random() * 60), 0, 0);
+      const durMin = 8 + Math.floor(Math.random() * 50);
+      const end = new Date(start.getTime() + durMin * 60000);
+      const distKm = Math.round((1 + Math.random() * 14) * 10) / 10;
+      const startSpot = nearHotspot(hotspots), endSpot = nearHotspot(hotspots);
+      const eventCounts = { harsh_brake: 0, speeding: 0, harsh_corner: 0, night_ride: 0, crash_detected: 0 };
+      const tripEvents = [];
+      const numEvents = Math.floor(Math.random() * 4 * riskFactor);
+      for (let e = 0; e < numEvents; e++) {
+        const useHotspot = Math.random() < 0.6;
+        const loc = useHotspot ? nearHotspot(hotspots) : { lat: startSpot.lat + (Math.random() - 0.5) * 0.05, lng: startSpot.lng + (Math.random() - 0.5) * 0.05, label: null };
+        const eType = pickType();
+        eventCounts[eType] = (eventCounts[eType] || 0) + 1;
+        const eTime = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+        tripEvents.push({
+          vehicle_id: v.id, region: v.region, union_name: v.union_name, vehicle_type: v.type,
+          event_type: eType, severity: 1 + Math.floor(Math.random() * 5),
+          lat: loc.lat, lng: loc.lng, speed_kmh: 30 + Math.floor(Math.random() * 50),
+          location_label: loc.label, ts: eTime.toISOString(), meta: {}
+        });
+      }
+      // Night-ride event flag if trip overlaps 22:00-05:00
+      if (hr >= 22 || hr < 5) {
+        eventCounts.night_ride++;
+        tripEvents.push({
+          vehicle_id: v.id, region: v.region, union_name: v.union_name, vehicle_type: v.type,
+          event_type: "night_ride", severity: 2,
+          lat: startSpot.lat, lng: startSpot.lng, speed_kmh: 40,
+          location_label: startSpot.label, ts: start.toISOString(), meta: {}
+        });
+      }
+      events.push.apply(events, tripEvents);
+      // Compute trip safety score: penalize event types differently
+      const penalty = (eventCounts.harsh_brake * 3) + (eventCounts.speeding * 4) + (eventCounts.harsh_corner * 2) + (eventCounts.night_ride * 1) + (eventCounts.crash_detected * 25);
+      const tripScore = Math.max(0, 100 - penalty);
+      trips.push({
+        vehicle_id: v.id, region: v.region, union_name: v.union_name, vehicle_type: v.type,
+        started_at: start.toISOString(), ended_at: end.toISOString(),
+        start_lat: startSpot.lat, start_lng: startSpot.lng, end_lat: endSpot.lat, end_lng: endSpot.lng,
+        distance_km: distKm, duration_min: durMin,
+        max_speed_kmh: 40 + Math.floor(Math.random() * 40), avg_speed_kmh: Math.round((distKm / (durMin / 60)) || 0),
+        event_counts: eventCounts, safety_score: tripScore
+      });
+    }
+  });
+  return { events, trips };
+}
+// Seed telematics from the fleet (must run after vehicles are seeded so we have union/type per vehicle).
+setTimeout(async () => {
+  try { const fleet = await store.listVehicles(); store.ensureSeededTelematics(() => generateTelematicsSeed(fleet)); }
+  catch (e) { console.warn("telematics seed:", e.message); }
+}, 4000);
+
 app.get("/", (_req, res) => res.json({ ok: true, service: "SaferMotorcycling verification proxy" }));
 
 const PORT = process.env.PORT || 8787;

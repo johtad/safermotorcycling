@@ -190,4 +190,93 @@ async function ensureSeededVehicles(seedFn) {
   } catch (e) { console.warn("ensureSeededVehicles:", e.message); }
 }
 
-module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, eventStoreStatus, listVehicles, upsertVehicle, ensureSeededVehicles, seedIncident, usingSupabase: () => !!supa };
+let memTelEvents = [];
+let memTelTrips = [];
+
+async function addTelEvent(e) {
+  e.ts = e.ts || new Date().toISOString();
+  if (supa) {
+    try { const { error } = await supa.from("telematics_events").insert(e); if (error) throw error; return e; }
+    catch (err) { memTelEvents.push(e); return e; }
+  }
+  memTelEvents.push(e); return e;
+}
+async function addTelEventsBatch(arr) {
+  if (!arr.length) return 0;
+  if (supa) {
+    try { const { error } = await supa.from("telematics_events").insert(arr); if (error) throw error; return arr.length; }
+    catch (err) { memTelEvents = memTelEvents.concat(arr); return arr.length; }
+  }
+  memTelEvents = memTelEvents.concat(arr); return arr.length;
+}
+async function addTelTrip(t) {
+  if (supa) {
+    try { const { error } = await supa.from("telematics_trips").insert(t); if (error) throw error; return t; }
+    catch (err) { memTelTrips.push(t); return t; }
+  }
+  memTelTrips.push(t); return t;
+}
+async function addTelTripsBatch(arr) {
+  if (!arr.length) return 0;
+  if (supa) {
+    try { const { error } = await supa.from("telematics_trips").insert(arr); if (error) throw error; return arr.length; }
+    catch (err) { memTelTrips = memTelTrips.concat(arr); return arr.length; }
+  }
+  memTelTrips = memTelTrips.concat(arr); return arr.length;
+}
+
+async function listTelEvents(region, sinceISO) {
+  if (supa) {
+    try {
+      let q = supa.from("telematics_events").select("*").order("ts", { ascending: false }).limit(5000);
+      if (region) q = q.eq("region", region);
+      if (sinceISO) q = q.gte("ts", sinceISO);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      return memTelEvents.filter((e) => (!region || e.region === region) && (!sinceISO || e.ts >= sinceISO));
+    }
+  }
+  return memTelEvents.filter((e) => (!region || e.region === region) && (!sinceISO || e.ts >= sinceISO));
+}
+
+async function listTelTrips(region, sinceISO) {
+  if (supa) {
+    try {
+      let q = supa.from("telematics_trips").select("*").order("ended_at", { ascending: false }).limit(5000);
+      if (region) q = q.eq("region", region);
+      if (sinceISO) q = q.gte("ended_at", sinceISO);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      return memTelTrips.filter((t) => (!region || t.region === region) && (!sinceISO || (t.ended_at || "") >= sinceISO));
+    }
+  }
+  return memTelTrips.filter((t) => (!region || t.region === region) && (!sinceISO || (t.ended_at || "") >= sinceISO));
+}
+
+async function telematicsCounts() {
+  if (supa) {
+    try {
+      const a = await supa.from("telematics_events").select("id", { count: "exact", head: true });
+      const b = await supa.from("telematics_trips").select("id", { count: "exact", head: true });
+      return { events: a.count || 0, trips: b.count || 0 };
+    } catch (err) { /* fall through */ }
+  }
+  return { events: memTelEvents.length, trips: memTelTrips.length };
+}
+
+async function ensureSeededTelematics(seedFn) {
+  try {
+    const c = await telematicsCounts();
+    if (c.events > 0 || c.trips > 0) { console.log("store: telematics already seeded (events=" + c.events + ", trips=" + c.trips + ")"); return; }
+    const seed = seedFn();
+    if (seed.events && seed.events.length) await addTelEventsBatch(seed.events);
+    if (seed.trips && seed.trips.length) await addTelTripsBatch(seed.trips);
+    console.log("store: seeded telematics", seed.events.length, "events,", seed.trips.length, "trips");
+  } catch (e) { console.warn("ensureSeededTelematics:", e.message); }
+}
+
+module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, eventStoreStatus, listVehicles, upsertVehicle, ensureSeededVehicles, addTelEvent, addTelEventsBatch, addTelTrip, addTelTripsBatch, listTelEvents, listTelTrips, telematicsCounts, ensureSeededTelematics, seedIncident, usingSupabase: () => !!supa };
