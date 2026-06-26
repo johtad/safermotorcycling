@@ -224,6 +224,73 @@ app.get("/registrations", async (req, res) => {
   catch (e) { res.status(500).json({ ok: false, detail: "store error: " + e.message }); }
 });
 
+// Vehicles — telematics-enabled vehicles with current position + cumulative driver-behaviour counters.
+app.get("/vehicles", async (req, res) => {
+  try { const list = await store.listVehicles(req.query.region, req.query.type); res.json({ ok: true, vehicles: list }); }
+  catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+app.post("/vehicles", async (req, res) => {
+  try {
+    const v = req.body || {};
+    if (!v.id) return res.status(400).json({ ok: false, detail: "missing id" });
+    await store.upsertVehicle(v);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, detail: e.message }); }
+});
+
+function generateSeedFleet() {
+  const accraSpots = [
+    { name: "Circle", lat: 5.5705, lng: -0.1969 },
+    { name: "Kaneshie", lat: 5.558, lng: -0.234 },
+    { name: "Tema", lat: 5.667, lng: -0.017 },
+    { name: "Madina", lat: 5.668, lng: -0.166 },
+    { name: "Spintex", lat: 5.618, lng: -0.165 },
+    { name: "Achimota", lat: 5.618, lng: -0.227 },
+    { name: "Kasoa", lat: 5.534, lng: -0.418 },
+    { name: "Tetteh Quarshie", lat: 5.620, lng: -0.173 }
+  ];
+  const tamaleSpots = [
+    { name: "Aboabo", lat: 9.398, lng: -0.836 },
+    { name: "Central market", lat: 9.407, lng: -0.853 },
+    { name: "Education ridge", lat: 9.43, lng: -0.85 },
+    { name: "Lamashegu", lat: 9.38, lng: -0.85 },
+    { name: "Sagnarigu", lat: 9.412, lng: -0.86 },
+    { name: "Kalpohin", lat: 9.39, lng: -0.872 }
+  ];
+  const types = ["motorcycle", "tricycle", "voxy"];
+  const unions = ["GPRTU", "Okada Riders Assoc.", "Tricycle Operators Union", "Co-operative Transport Society"];
+  const names = ["Kwabena Asante","Ama Owusu","Ibrahim Salifu","Joseph Tetteh","Mavis Adjei","Kwesi Boadu","Akosua Frimpong","Mohammed Awal","Fatima Yakubu","Daniel Mensah","Esi Boateng","Kofi Anane","Yaa Asantewaa","Samuel Antwi","Ophelia Mensah","Issaka Mohammed","Naa Adoley","Kwame Nkrumah","Aboagye Konadu","Aisha Issaka","Kobena Ofori","Comfort Adjei","Ibrahim Tahiru","Yaw Boakye"];
+  const out = []; let n = 1;
+  function pushAt(region, spots, prefix, idxAdd) {
+    for (let i = 0; i < spots.length; i++) {
+      for (let k = 0; k < 3; k++) {
+        const type = types[(i + k + idxAdd) % types.length];
+        const status = k === 0 ? "moving" : (k === 1 ? "parked" : (Math.random() > 0.5 ? "moving" : "idle"));
+        const speed = status === "moving" ? Math.floor(20 + Math.random() * 40) : 0;
+        out.push({
+          id: prefix + "-" + String(n).padStart(4, "0"),
+          type, region, plate: (region === "Accra" ? "GR " : "NR ") + (1000 + n * 7).toString() + "-24",
+          rider_name: names[(n - 1) % names.length],
+          union_name: unions[n % unions.length],
+          status,
+          lat: spots[i].lat + (Math.random() - 0.5) * 0.012,
+          lng: spots[i].lng + (Math.random() - 0.5) * 0.012,
+          speed_kmh: speed,
+          heading: Math.floor(Math.random() * 360),
+          safety_score: 60 + Math.floor(Math.random() * 40),
+          harsh_brake_count: Math.floor(Math.random() * 12),
+          speeding_count: Math.floor(Math.random() * 8)
+        });
+        n++;
+      }
+    }
+  }
+  pushAt("Accra", accraSpots, "AV", 0);
+  pushAt("Tamale", tamaleSpots, "TV", 1);
+  return out;
+}
+store.ensureSeededVehicles(generateSeedFleet);
+
 app.get("/", (_req, res) => res.json({ ok: true, service: "SaferMotorcycling verification proxy" }));
 
 const PORT = process.env.PORT || 8787;

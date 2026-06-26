@@ -137,4 +137,53 @@ function eventStoreStatus() {
   return { supabase: !!supa, fallback_count: memFallback.length, last_error: lastEventError };
 }
 
-module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, eventStoreStatus, seedIncident, usingSupabase: () => !!supa };
+let memVehicles = [];
+
+async function listVehicles(region, type) {
+  if (supa) {
+    try {
+      let q = supa.from("vehicles").select("*");
+      if (region) q = q.eq("region", region);
+      if (type) q = q.eq("type", type);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      return memVehicles.filter((v) => (!region || v.region === region) && (!type || v.type === type));
+    }
+  }
+  return memVehicles.filter((v) => (!region || v.region === region) && (!type || v.type === type));
+}
+
+async function upsertVehicle(v) {
+  v.last_seen = new Date().toISOString();
+  if (supa) {
+    try {
+      const { error } = await supa.from("vehicles").upsert(v);
+      if (error) throw error;
+      return v;
+    } catch (err) { /* fall through to memory */ }
+  }
+  const i = memVehicles.findIndex((x) => x.id === v.id);
+  if (i >= 0) memVehicles[i] = v;
+  else memVehicles.push(v);
+  return v;
+}
+
+async function ensureSeededVehicles(seedFn) {
+  try {
+    const existing = await listVehicles();
+    if (existing.length === 0) {
+      const fleet = seedFn();
+      if (supa) {
+        try { await supa.from("vehicles").upsert(fleet); }
+        catch (e) { console.warn("vehicle seed (supabase):", e.message); memVehicles = fleet.slice(); }
+      } else {
+        memVehicles = fleet.slice();
+      }
+      console.log("store: seeded", fleet.length, "vehicles");
+    }
+  } catch (e) { console.warn("ensureSeededVehicles:", e.message); }
+}
+
+module.exports = { addIncident, listIncidents, getIncident, updateIncidentStatus, addRegistration, listRegistrations, addEvent, listEvents, eventStoreStatus, listVehicles, upsertVehicle, ensureSeededVehicles, seedIncident, usingSupabase: () => !!supa };

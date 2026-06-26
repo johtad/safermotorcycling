@@ -31,6 +31,28 @@ create table if not exists usage_events (
 create index if not exists usage_events_ts_idx on usage_events (ts desc);
 create index if not exists usage_events_session_idx on usage_events (session_id);
 
+create table if not exists vehicles (
+  id                 text primary key,
+  type               text,
+  region             text,
+  plate              text,
+  rider_name         text,
+  union_name         text,
+  status             text,
+  lat                double precision,
+  lng                double precision,
+  speed_kmh          int,
+  heading            int,
+  safety_score       int,
+  harsh_brake_count  int default 0,
+  speeding_count     int default 0,
+  last_seen          timestamptz default now(),
+  data               jsonb default '{}'::jsonb
+);
+create index if not exists vehicles_region_idx on vehicles (region);
+create index if not exists vehicles_type_idx on vehicles (type);
+create index if not exists vehicles_status_idx on vehicles (status);
+
 -- The backend connects with the service-role key (server-side only), which bypasses
 -- row-level security. If you later expose these tables to the browser directly, enable
 -- RLS and add policies — but with this architecture the browser never touches Supabase.

@@ -143,6 +143,7 @@ table.reg th,table.reg td{white-space:nowrap}
     <button id="seg-field" class="on" onclick="topView('field')">Field app</button>
     <button id="seg-registry" onclick="topView('registry')">Registry</button>
     <button id="seg-command" onclick="topView('command')">Command centre</button>
+    <button id="seg-tracking" onclick="topView('tracking')">Tracking</button>
   </div>
 </div>
 
@@ -334,6 +335,42 @@ table.reg th,table.reg td{white-space:nowrap}
   </div>
 </div>
 
+<div class="view" id="v-tracking">
+  <div class="dash-head">
+    <div><h2 style="margin:0;font-size:18px">Live tracking</h2><p class="small muted" style="margin:2px 0 0">Telematics-enabled commercial vehicles · <span id="trkRegionLabel">Greater Accra</span></p></div>
+    <span class="badge muted2" id="trkUpdated">—</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <div class="seg">
+      <button id="trk-accra" class="on" onclick="switchTrackRegion('Accra')">Greater Accra</button>
+      <button id="trk-tamale" onclick="switchTrackRegion('Tamale')">Tamale metro</button>
+    </div>
+    <span class="small faint">+ 14 more regions ready to switch on</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="lab">Vehicles tracked</div><div class="num" id="trk-total">0</div></div>
+    <div class="kpi"><div class="lab">In motion</div><div class="num" id="trk-motion">0</div></div>
+    <div class="kpi"><div class="lab">Parked / idle</div><div class="num" id="trk-parked">0</div></div>
+    <div class="kpi"><div class="lab">Avg safety score</div><div class="num" id="trk-score">0</div></div>
+  </div>
+  <div class="panel">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px">
+      <h3 style="margin:0">Vehicles on the road</h3>
+      <span style="flex:1"></span>
+      <label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="ftype-motorcycle" checked onchange="renderVehicles()" /> Motorcycles</label>
+      <label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="ftype-tricycle" checked onchange="renderVehicles()" /> Tricycles</label>
+      <label style="display:inline-flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="ftype-voxy" checked onchange="renderVehicles()" /> Voxy</label>
+    </div>
+    <div id="trackMap" style="height:480px;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface2)"></div>
+    <div class="legend" style="margin-top:8px">
+      <span><span class="sw" style="background:#1d7a52"></span>moving</span>
+      <span><span class="sw" style="background:#9a6b00"></span>idle</span>
+      <span><span class="sw" style="background:#6c6b64"></span>parked</span>
+      <span class="faint">● motorcycle · ▲ tricycle · ■ voxy</span>
+    </div>
+  </div>
+</div>
+
 <div class="foot">SaferMotorcycling · NRSA · prototype · regional figures are illustrative; registry runs on the loaded list (sample or imported). Handle real data under Act 843.</div>
 </div>
 
@@ -408,7 +445,7 @@ function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){retu
 function norm(s){return (s||"").toString().trim().toLowerCase();}
 function noSpace(s){return norm(s).replace(/\s+/g,"");}
 
-function topView(name){['field','registry','command'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}track('tab',{tab:name});}
+function topView(name){['field','registry','command','tracking'].forEach(function(v){var vw=$('v-'+v);if(vw)vw.classList.toggle('on',v===name);var sg=$('seg-'+v);if(sg)sg.classList.toggle('on',v===name);});window.scrollTo(0,0);if(name==='command'&&MAP){setTimeout(function(){MAP.invalidateSize();renderMap();renderMapIncidents();},150);}if(name==='tracking'){setTimeout(function(){initTrackMap();loadVehicles();},150);}track('tab',{tab:name});}
 function go(name){['home','register','verify'].forEach(function(s){var e=$('s-'+s);if(e)e.classList.toggle('on',s===name);});['home','verify'].forEach(function(s){var b=$('t-'+s);if(b)b.classList.toggle('on',s===name);});var rc=$('rolechip');if(rc)rc.textContent=(name==='register'?'warden':name);if(name==='register')resetReg();if(name==='verify'){$('vq').value='';$('vres').innerHTML='';}}
 function regStep(n){for(var i=1;i<=5;i++){var s=$('rstep'+i);if(s)s.classList.toggle('on',i===n);var d=$('rdot'+i);if(d)d.classList.toggle('on',i<=n);}}
 function confirmUnion(){var u=$('reg-union');if(u){$('union-name').textContent=u.value;}reveal('union-res','union-cont');}
@@ -652,6 +689,18 @@ document.getElementById('importInput').addEventListener('change',importCSV);
 document.getElementById('regSearch').addEventListener('input',function(){renderReg(this.value);});
 document.getElementById('incLogSearch').addEventListener('input',function(){renderIncidentLog(this.value);});
 document.getElementById('vq').addEventListener('keydown',function(e){if(e.key==='Enter')doVerify();});
+var TMAP=null,TLAYER=null,VEHICLES=[],TRACK_CURRENT='Accra',ANIM_TIMER=null,REFRESH_TIMER=null;
+function trackCentre(){return TRACK_CURRENT==='Accra'?[5.59,-0.20,11]:[9.405,-0.845,12];}
+function initTrackMap(){if(TMAP||typeof L==='undefined')return;TMAP=L.map('trackMap',{zoomControl:true});var streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(TMAP);var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'});L.control.layers({Streets:streets,Satellite:sat},{},{position:'topright'}).addTo(TMAP);TLAYER=L.layerGroup().addTo(TMAP);var c=trackCentre();TMAP.setView([c[0],c[1]],c[2]);setTimeout(function(){TMAP.invalidateSize();},120);}
+function vehicleGlyph(v){var color=v.status==='moving'?'#1d7a52':(v.status==='idle'?'#9a6b00':'#6c6b64');var glyph=v.type==='motorcycle'?'●':(v.type==='tricycle'?'▲':'■');return L.divIcon({className:'',html:'<div style="background:'+color+';color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,.4)">'+glyph+'</div>',iconSize:[22,22],iconAnchor:[11,11]});}
+function activeTypes(){var t=[];if($('ftype-motorcycle')&&$('ftype-motorcycle').checked)t.push('motorcycle');if($('ftype-tricycle')&&$('ftype-tricycle').checked)t.push('tricycle');if($('ftype-voxy')&&$('ftype-voxy').checked)t.push('voxy');return t;}
+function renderVehicles(){if(!TMAP||!TLAYER)return;TLAYER.clearLayers();var types=activeTypes();var shown=VEHICLES.filter(function(v){return types.indexOf(v.type)>=0;});shown.forEach(function(v){L.marker([v.lat,v.lng],{icon:vehicleGlyph(v)}).bindPopup('<b>'+esc(v.plate||'?')+'</b> · '+esc(v.type)+'<br>'+esc(v.rider_name||'')+(v.union_name?' · '+esc(v.union_name):'')+'<br>status: '+esc(v.status)+(v.speed_kmh?' · '+v.speed_kmh+' km/h':'')+'<br>safety score: '+(v.safety_score||'?')+' / 100<br>harsh brakes: '+(v.harsh_brake_count||0)+' · speeding: '+(v.speeding_count||0)).addTo(TLAYER);});$('trk-total').textContent=shown.length.toLocaleString();$('trk-motion').textContent=shown.filter(function(v){return v.status==='moving';}).length;$('trk-parked').textContent=shown.filter(function(v){return v.status==='parked'||v.status==='idle';}).length;var avg=shown.length?Math.round(shown.reduce(function(a,v){return a+(parseInt(v.safety_score,10)||0);},0)/shown.length):0;$('trk-score').textContent=avg;$('trkUpdated').textContent='updated '+new Date().toLocaleTimeString();}
+function loadVehicles(){fetch(BACKEND+'/vehicles?region='+TRACK_CURRENT).then(function(r){return r.json();}).then(function(d){VEHICLES=(d&&d.vehicles)||[];renderVehicles();}).catch(function(){});}
+function animateVehicles(){if(!VEHICLES.length||!TMAP)return;VEHICLES.forEach(function(v){if(v.status!=='moving')return;var sp=v.speed_kmh||30;var dt=2.5;var distKm=sp*dt/3600;var rad=(v.heading||0)*Math.PI/180;var dLat=(distKm/111)*Math.cos(rad);var lngFactor=Math.cos((v.lat||0)*Math.PI/180);var dLng=(distKm/(111*Math.max(0.1,lngFactor)))*Math.sin(rad);v.lat=(v.lat||0)+dLat;v.lng=(v.lng||0)+dLng;v.heading=(((v.heading||0)+(Math.random()-0.5)*30)+360)%360;});renderVehicles();}
+function switchTrackRegion(name){TRACK_CURRENT=name;$('trk-accra').classList.toggle('on',name==='Accra');$('trk-tamale').classList.toggle('on',name==='Tamale');$('trkRegionLabel').textContent=name==='Accra'?'Greater Accra':'Tamale metro';if(TMAP){var c=trackCentre();TMAP.setView([c[0],c[1]],c[2]);}loadVehicles();track('tab',{tab:'tracking',region:name});}
+if(ANIM_TIMER)clearInterval(ANIM_TIMER);ANIM_TIMER=setInterval(animateVehicles,2500);
+if(REFRESH_TIMER)clearInterval(REFRESH_TIMER);REFRESH_TIMER=setInterval(loadVehicles,30000);
+
 regStep(1);switchRegion('Accra');recompute();setInterval(pollIncidents,6000);
 track('page_view',{w:window.innerWidth,h:window.innerHeight,tz_min:new Date().getTimezoneOffset(),ref:document.referrer||'',dev:DEV});
 if(DEV){var d=document.createElement('div');d.id='devPanel';d.style.cssText='position:fixed;right:12px;bottom:12px;width:340px;max-height:50vh;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 4px 18px rgba(0,0,0,.12);z-index:80;font-size:12px';d.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface)"><strong style="flex:1">Visitor activity</strong><span class="small muted">sid '+SID.slice(0,10)+'</span><button class="btn sm" style="height:26px;padding:0 8px;font-size:11px" onclick="loadEvents()">refresh</button></div><div id="devEvents" style="padding:8px 12px"></div>';document.body.appendChild(d);loadEvents();setInterval(loadEvents,15000);}
