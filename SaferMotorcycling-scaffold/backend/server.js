@@ -255,7 +255,9 @@ function generateSeedFleet() {
     { name: "Education ridge", lat: 9.43, lng: -0.85 },
     { name: "Lamashegu", lat: 9.38, lng: -0.85 },
     { name: "Sagnarigu", lat: 9.412, lng: -0.86 },
-    { name: "Kalpohin", lat: 9.39, lng: -0.872 }
+    { name: "Kalpohin", lat: 9.39, lng: -0.872 },
+    { name: "Vittin", lat: 9.435, lng: -0.815 },
+    { name: "Choggu", lat: 9.451, lng: -0.866 }
   ];
   const types = ["motorcycle", "tricycle", "voxy"];
   const unions = ["GPRTU", "Okada Riders Assoc.", "Tricycle Operators Union", "Co-operative Transport Society"];

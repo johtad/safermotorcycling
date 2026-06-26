@@ -172,16 +172,20 @@ async function upsertVehicle(v) {
 
 async function ensureSeededVehicles(seedFn) {
   try {
-    const existing = await listVehicles();
-    if (existing.length === 0) {
-      const fleet = seedFn();
-      if (supa) {
-        try { await supa.from("vehicles").upsert(fleet); }
-        catch (e) { console.warn("vehicle seed (supabase):", e.message); memVehicles = fleet.slice(); }
-      } else {
-        memVehicles = fleet.slice();
+    const fleet = seedFn();
+    if (supa) {
+      try {
+        const { error } = await supa.from("vehicles").upsert(fleet);
+        if (error) throw error;
+        console.log("store: upserted", fleet.length, "seed vehicles");
+      } catch (e) {
+        console.warn("vehicle seed (supabase):", e.message);
+        const byId = {}; memVehicles.forEach((v) => (byId[v.id] = v)); fleet.forEach((v) => (byId[v.id] = v));
+        memVehicles = Object.values(byId);
       }
-      console.log("store: seeded", fleet.length, "vehicles");
+    } else {
+      const byId = {}; memVehicles.forEach((v) => (byId[v.id] = v)); fleet.forEach((v) => (byId[v.id] = v));
+      memVehicles = Object.values(byId);
     }
   } catch (e) { console.warn("ensureSeededVehicles:", e.message); }
 }
